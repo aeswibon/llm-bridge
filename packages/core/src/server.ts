@@ -1,8 +1,9 @@
 import http, { IncomingMessage, ServerResponse } from "node:http";
-import { BridgeConfig, DefaultConfig } from "./types.js";
+import { BridgeConfig, DefaultConfig, BridgePlugin } from "./types.js";
 import { parseChatRequest } from "./parser.js";
 import { PluginRegistry } from "./registry.js";
 import { SessionStore } from "./session.js";
+import { formatStreamChunk, formatCompletion } from "./formatter.js";
 
 export class BridgeServer {
   private server: http.Server | null = null;
@@ -124,7 +125,7 @@ export class BridgeServer {
       const chunks: string[] = [];
       for await (const chunk of session.send(messages, tools)) {
         if (stream) {
-          res.write(this.formatSSEChunk(chunk, model));
+          res.write(formatStreamChunk(chunk, model, `chatcmpl-${crypto.randomUUID()}`));
         } else {
           if (chunk.type === "text" && chunk.content) {
             chunks.push(chunk.content);
@@ -134,18 +135,8 @@ export class BridgeServer {
 
       if (!stream) {
         const completionId = `chatcmpl-${crypto.randomUUID()}`;
-        this.jsonResponseRaw(res, 200, {
-          id: completionId,
-          object: "chat.completion",
-          created: Math.floor(Date.now() / 1000),
-          model,
-          choices: [{
-            index: 0,
-            message: { role: "assistant", content: chunks.join("") },
-            finish_reason: "stop",
-          }],
-          usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
-        });
+        const completion = formatCompletion(chunks.join(""), model, completionId);
+        res.end(JSON.stringify(completion));
       } else {
         res.write(`data: [DONE]\n\n`);
         res.end();
@@ -163,48 +154,12 @@ export class BridgeServer {
     }
   }
 
-  private formatSSEChunk(chunk: any, model: string): string {
-    const completionId = `chatcmpl-${crypto.randomUUID()}`;
-    const delta: Record<string, unknown> = {};
-    let finishReason: string | null = null;
-
-    if (chunk.type === "text" && chunk.content) {
-      delta.content = chunk.content;
-    }
-    if (chunk.type === "tool_call" && chunk.toolCall) {
-      delta.tool_calls = [{
-        index: 0,
-        id: chunk.toolCall.id,
-        type: "function",
-        function: { name: chunk.toolCall.name, arguments: chunk.toolCall.arguments },
-      }];
-    }
-    if (chunk.finishReason) {
-      finishReason = chunk.finishReason;
-    }
-
-    const payload = {
-      id: completionId,
-      object: "chat.completion.chunk",
-      created: Math.floor(Date.now() / 1000),
-      model,
-      choices: [{ index: 0, delta, finish_reason: finishReason }],
-    };
-
-    return `data: ${JSON.stringify(payload)}\n\n`;
-  }
-
   private jsonResponse(res: http.ServerResponse, status: number, body: unknown): void {
     res.writeHead(status, { "Content-Type": "application/json" });
     res.end(JSON.stringify(body));
   }
 
-  private jsonResponseRaw(res: http.ServerResponse, status: number, body: unknown): void {
-    res.writeHead(status, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(body));
-  }
-
-  registerPlugin(plugin: any): void {
+  registerPlugin(plugin: BridgePlugin): void {
     this.registry.register(plugin);
   }
 

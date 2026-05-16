@@ -34,4 +34,18 @@ describe("config", () => {
     const loaded = loadConfig();
     expect(loaded.port).toBe(5555);
   });
+
+  it("overrides port from LLM_BRIDGE_PORT env", () => {
+    process.env.LLM_BRIDGE_PORT = "7777";
+    const config = loadConfig();
+    expect(config.port).toBe(7777);
+    delete process.env.LLM_BRIDGE_PORT;
+  });
+
+  it("overrides host from LLM_BRIDGE_HOST env", () => {
+    process.env.LLM_BRIDGE_HOST = "0.0.0.0";
+    const config = loadConfig();
+    expect(config.host).toBe("0.0.0.0");
+    delete process.env.LLM_BRIDGE_HOST;
+  });
 });
