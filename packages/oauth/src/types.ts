@@ -27,3 +27,23 @@ export interface OAuthConfig {
   store: TokenStore;
   onRefresh?: (newToken: StoredToken) => Promise<void>;
 }
+
+export interface PKCEState {
+  codeVerifier: string;
+  codeChallenge: string;
+  state: string;
+}
+
+export interface DeviceCodeResponse {
+  deviceCode: string;
+  userCode: string;
+  verificationUri: string;
+  expiresIn: number;
+  interval: number;
+}
+
+export interface RefreshQueueEntry {
+  promise: Promise<StoredToken>;
+  resolve: (token: StoredToken) => void;
+  reject: (error: Error) => void;
+}
