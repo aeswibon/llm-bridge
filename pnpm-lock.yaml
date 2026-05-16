@@ -20,6 +20,9 @@ importers:
 
   cli:
     dependencies:
+      '@llm-bridge/copilot':
+        specifier: workspace:*
+        version: link:../packages/copilot
       '@llm-bridge/core':
         specifier: workspace:*
         version: link:../packages/core
