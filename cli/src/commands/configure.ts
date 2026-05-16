@@ -10,9 +10,11 @@ export async function configureOpencodeCommand(): Promise<void> {
 
   const bridgeConfig = readConfig();
   const providerId = 'llm-bridge';
-  const modelId = 'composer-2';
+  const plugin = bridgeConfig.activePlugin ?? 'cursor';
+  const modelId = plugin === 'copilot' ? 'gpt-4o-copilot' : 'composer-2';
 
   injectProvider(configPath, providerId, modelId, bridgeConfig.port);
   console.log(`Injected provider into ${configPath}`);
   console.log(`Provider: ${providerId}, Model: ${modelId}, Port: ${bridgeConfig.port}`);
+  console.log(`Plugin: ${plugin}`);
 }

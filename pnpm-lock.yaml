@@ -20,12 +20,28 @@ importers:
 
   cli:
     dependencies:
+      '@llm-bridge/copilot':
+        specifier: workspace:*
+        version: link:../packages/copilot
       '@llm-bridge/core':
         specifier: workspace:*
         version: link:../packages/core
       '@llm-bridge/cursor':
         specifier: workspace:*
         version: link:../packages/cursor
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.19
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@22.19.19)
+
+  packages/copilot:
+    dependencies:
+      '@llm-bridge/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.15.0
