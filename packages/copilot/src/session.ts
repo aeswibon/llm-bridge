@@ -60,7 +60,7 @@ export class CopilotBridgeSession implements BridgeSession {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
+        const lines = buffer.split(/\r?\n/);
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
@@ -96,10 +96,17 @@ export class CopilotBridgeSession implements BridgeSession {
 
             if (parsed.choices?.[0]?.finish_reason) {
               const reason = parsed.choices[0].finish_reason;
+              const finishReason =
+                reason === 'stop'
+                  ? 'stop'
+                  : reason === 'tool_calls'
+                    ? 'tool_calls'
+                    : reason === 'length'
+                      ? 'length'
+                      : 'error';
               yield {
                 type: 'done',
-                finishReason:
-                  reason === 'stop' ? 'stop' : reason === 'tool_calls' ? 'tool_calls' : 'error',
+                finishReason,
               };
             }
           } catch {
