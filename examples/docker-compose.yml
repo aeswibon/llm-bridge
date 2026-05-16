@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  llm-bridge:
+    build: .
+    ports:
+      - "3849:3849"
+    environment:
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
+      - LLM_BRIDGE_PORT=3849
+    restart: unless-stopped
