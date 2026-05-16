@@ -1,0 +1,36 @@
+import { BridgeServer, loadConfig } from "@llm-bridge/core";
+import { CursorBridgePlugin } from "@llm-bridge/cursor";
+
+export async function startCommand(): Promise<void> {
+  const config = loadConfig();
+  const server = new BridgeServer(config);
+
+  if (config.activePlugin === "cursor") {
+    const plugin = new CursorBridgePlugin();
+    server.registerPlugin(plugin);
+    server.setActivePlugin("cursor");
+    console.error(`[llm-bridge] active plugin: cursor`);
+  } else {
+    console.error(`[llm-bridge] warning: unknown plugin "${config.activePlugin}"`);
+  }
+
+  try {
+    await server.start();
+  } catch (err: any) {
+    if (err.code === "EADDRINUSE") {
+      console.error(`[llm-bridge] error: port ${config.port} is already in use`);
+    } else {
+      console.error(`[llm-bridge] error: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  const shutdown = async () => {
+    console.error("\n[llm-bridge] shutting down...");
+    await server.stop();
+    process.exit(0);
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+}
