@@ -1,0 +1,35 @@
+name: New Provider
+description: Request or propose a new provider plugin
+labels: [enhancement, provider]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider name
+      description: Which AI IDE or service?
+      placeholder: GitHub Copilot, Windsurf, etc.
+    validations:
+      required: true
+  - type: input
+    id: api-docs
+    attributes:
+      label: API documentation
+      description: Link to the provider's API docs
+      placeholder: https://...
+  - type: textarea
+    id: description
+    attributes:
+      label: Why this provider?
+      description: What use case does this enable?
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Will you implement this?
+      options:
+        - "Yes, I'll submit a PR"
+        - "No, requesting for community"
+        - "Maybe, need guidance"
+    validations:
+      required: true
