@@ -17,7 +17,12 @@ export function findOpencodeConfig(): string | null {
 
 export function injectProvider(configPath: string, providerId: string, modelId: string, port: number): void {
   const raw = fs.readFileSync(configPath, "utf8");
-  const config = JSON.parse(raw);
+  let config: any;
+  try {
+    config = JSON.parse(raw);
+  } catch (e) {
+    throw new Error(`Failed to parse ${configPath}: ${(e as Error).message}`);
+  }
   if (!config.provider) config.provider = {};
   config.provider[providerId] = {
     npm: "@ai-sdk/openai-compatible",

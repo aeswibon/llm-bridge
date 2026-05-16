@@ -14,17 +14,23 @@ export async function startCommand(): Promise<void> {
     console.error(`[llm-bridge] warning: unknown plugin "${config.activePlugin}"`);
   }
 
-  await server.start();
+  try {
+    await server.start();
+  } catch (err: any) {
+    if (err.code === "EADDRINUSE") {
+      console.error(`[llm-bridge] error: port ${config.port} is already in use`);
+    } else {
+      console.error(`[llm-bridge] error: ${err.message}`);
+    }
+    process.exit(1);
+  }
 
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.error("\n[llm-bridge] shutting down...");
     await server.stop();
     process.exit(0);
-  });
+  };
 
-  process.on("SIGTERM", async () => {
-    console.error("\n[llm-bridge] shutting down...");
-    await server.stop();
-    process.exit(0);
-  });
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 }
