@@ -1,4 +1,4 @@
-import type { BridgeSession } from "./types.js";
+import type { BridgeSession } from './types.js';
 
 interface SessionEntry {
   session: BridgeSession;
@@ -41,8 +41,8 @@ export class SessionStore {
   async disposeAll(): Promise<void> {
     const disposals = Array.from(this.sessions.values()).map((entry) =>
       entry.session.dispose().catch((err) => {
-        console.error("[session] disposeAll error:", err);
-      })
+        console.error('[session] disposeAll error:', err);
+      }),
     );
     this.sessions.clear();
     await Promise.all(disposals);

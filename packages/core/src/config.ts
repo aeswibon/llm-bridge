@@ -1,11 +1,11 @@
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
-import { BridgeConfig, DefaultConfig } from "./types.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { BridgeConfig, DefaultConfig } from './types.js';
 
 export function configPath(): string {
   const home = os.homedir();
-  return path.join(home, ".config", "llm-bridge", "config.json");
+  return path.join(home, '.config', 'llm-bridge', 'config.json');
 }
 
 export function loadConfig(): BridgeConfig {
@@ -15,7 +15,7 @@ export function loadConfig(): BridgeConfig {
   try {
     const filePath = process.env.LLM_BRIDGE_CONFIG ?? configPath();
     if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf8");
+      const raw = fs.readFileSync(filePath, 'utf8');
       const fileConfig = JSON.parse(raw) as Partial<BridgeConfig>;
       const config = { ...DefaultConfig, ...fileConfig };
       if (envPort) config.port = parseInt(envPort, 10);
@@ -23,7 +23,7 @@ export function loadConfig(): BridgeConfig {
       return config;
     }
   } catch (err) {
-    console.warn("[llm-bridge] failed to load config file, using defaults:", err);
+    console.warn('[llm-bridge] failed to load config file, using defaults:', err);
   }
 
   const config = { ...DefaultConfig };

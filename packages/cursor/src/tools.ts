@@ -1,7 +1,7 @@
-import type { ToolDefinition } from "@llm-bridge/core";
+import type { ToolDefinition } from '@llm-bridge/core';
 
 export interface CursorTool {
-  type: "function";
+  type: 'function';
   function: {
     name: string;
     description?: string;
@@ -11,7 +11,7 @@ export interface CursorTool {
 
 export function translateTools(tools: ToolDefinition[]): CursorTool[] {
   return tools.map((tool) => ({
-    type: "function" as const,
+    type: 'function' as const,
     function: {
       name: tool.function.name,
       description: tool.function.description,

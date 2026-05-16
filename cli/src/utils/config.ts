@@ -1,4 +1,4 @@
-import { loadConfig, saveConfig, BridgeConfig } from "@llm-bridge/core";
+import { loadConfig, saveConfig, BridgeConfig } from '@llm-bridge/core';
 
 export function readConfig(): BridgeConfig {
   return loadConfig();

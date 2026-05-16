@@ -1,13 +1,13 @@
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 export function findOpencodeConfig(): string | null {
   const candidates = [
-    path.join(os.homedir(), ".config", "opencode", "opencode.json"),
-    path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"),
-    path.join(process.cwd(), "opencode.json"),
-    path.join(process.cwd(), "opencode.jsonc"),
+    path.join(os.homedir(), '.config', 'opencode', 'opencode.json'),
+    path.join(os.homedir(), '.config', 'opencode', 'opencode.jsonc'),
+    path.join(process.cwd(), 'opencode.json'),
+    path.join(process.cwd(), 'opencode.jsonc'),
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -15,8 +15,13 @@ export function findOpencodeConfig(): string | null {
   return null;
 }
 
-export function injectProvider(configPath: string, providerId: string, modelId: string, port: number): void {
-  const raw = fs.readFileSync(configPath, "utf8");
+export function injectProvider(
+  configPath: string,
+  providerId: string,
+  modelId: string,
+  port: number,
+): void {
+  const raw = fs.readFileSync(configPath, 'utf8');
   let config: any;
   try {
     config = JSON.parse(raw);
@@ -25,10 +30,10 @@ export function injectProvider(configPath: string, providerId: string, modelId: 
   }
   if (!config.provider) config.provider = {};
   config.provider[providerId] = {
-    npm: "@ai-sdk/openai-compatible",
-    name: "LLM Bridge",
+    npm: '@ai-sdk/openai-compatible',
+    name: 'LLM Bridge',
     options: {
-      apiKey: "bridge-local",
+      apiKey: 'bridge-local',
       baseURL: `http://127.0.0.1:${port}/v1`,
     },
     models: { [modelId]: { name: modelId } },
