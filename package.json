@@ -12,11 +12,14 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,js,json,md,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md,yml}\"",
     "dev": "turbo run dev --parallel"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "prettier": "^3.2.0"
   },
   "packageManager": "pnpm@9.0.0"
 }

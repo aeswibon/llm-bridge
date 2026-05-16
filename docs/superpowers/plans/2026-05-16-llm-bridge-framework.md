@@ -92,6 +92,7 @@ llm-bridge/
 ### Task 1: Monorepo Setup
 
 **Files:**
+
 - Create: `package.json` (root), `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `.gitignore`
 
 - [ ] **Step 1: Create root package.json**
@@ -125,8 +126,8 @@ llm-bridge/
 
 ```yaml
 packages:
-  - "packages/*"
-  - "cli"
+  - 'packages/*'
+  - 'cli'
 ```
 
 - [ ] **Step 3: Create turbo.json**
@@ -195,6 +196,7 @@ git commit -m "chore: set up monorepo with pnpm workspaces and turbo"
 ### Task 2: Core Types and Plugin Interface
 
 **Files:**
+
 - Create: `packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/src/types.ts`, `packages/core/src/index.ts`
 - Test: `packages/core/test/types.test.ts`
 
@@ -241,27 +243,31 @@ git commit -m "chore: set up monorepo with pnpm workspaces and turbo"
 - [ ] **Step 3: Create packages/core/src/types.ts**
 
 ```typescript
-import { z } from "zod";
+import { z } from 'zod';
 
 export const MessageSchema = z.object({
-  role: z.enum(["system", "user", "assistant", "tool", "function"]),
+  role: z.enum(['system', 'user', 'assistant', 'tool', 'function']),
   content: z.string().nullable().optional(),
   name: z.string().optional(),
   tool_call_id: z.string().optional(),
-  tool_calls: z.array(z.object({
-    id: z.string(),
-    type: z.literal("function"),
-    function: z.object({
-      name: z.string(),
-      arguments: z.string(),
-    }),
-  })).optional(),
+  tool_calls: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.literal('function'),
+        function: z.object({
+          name: z.string(),
+          arguments: z.string(),
+        }),
+      }),
+    )
+    .optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;
 
 export const ToolDefinitionSchema = z.object({
-  type: z.literal("function"),
+  type: z.literal('function'),
   function: z.object({
     name: z.string(),
     description: z.string().optional(),
@@ -274,17 +280,19 @@ export type ToolDefinition = z.infer<typeof ToolDefinitionSchema>;
 export const ModelInfoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  capabilities: z.object({
-    streaming: z.boolean().optional(),
-    tools: z.boolean().optional(),
-    vision: z.boolean().optional(),
-  }).optional(),
+  capabilities: z
+    .object({
+      streaming: z.boolean().optional(),
+      tools: z.boolean().optional(),
+      vision: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export type ModelInfo = z.infer<typeof ModelInfoSchema>;
 
-export type StreamChunkType = "text" | "tool_call" | "tool_result" | "error" | "done";
-export type FinishReason = "stop" | "tool_calls" | "error" | "length";
+export type StreamChunkType = 'text' | 'tool_call' | 'tool_result' | 'error' | 'done';
+export type FinishReason = 'stop' | 'tool_calls' | 'error' | 'length';
 
 export interface StreamChunk {
   type: StreamChunkType;
@@ -323,29 +331,29 @@ export interface BridgeConfig {
   host: string;
   plugins: Record<string, Record<string, string>>;
   sessionTTL: number;
-  toolMode: "strict" | "lenient";
+  toolMode: 'strict' | 'lenient';
 }
 
 export const DefaultConfig: BridgeConfig = {
-  activePlugin: "cursor",
+  activePlugin: 'cursor',
   port: 3849,
-  host: "127.0.0.1",
+  host: '127.0.0.1',
   plugins: {},
   sessionTTL: 1800,
-  toolMode: "lenient",
+  toolMode: 'lenient',
 };
 ```
 
 - [ ] **Step 4: Create packages/core/src/index.ts**
 
 ```typescript
-export * from "./types.js";
-export { BridgeServer } from "./server.js";
-export { SessionStore } from "./session.js";
-export { parseChatRequest, parseModelsRequest } from "./parser.js";
-export { formatStreamChunk, formatCompletion } from "./formatter.js";
-export { PluginRegistry } from "./registry.js";
-export { loadConfig, saveConfig, configPath } from "./config.js";
+export * from './types.js';
+export { BridgeServer } from './server.js';
+export { SessionStore } from './session.js';
+export { parseChatRequest, parseModelsRequest } from './parser.js';
+export { formatStreamChunk, formatCompletion } from './formatter.js';
+export { PluginRegistry } from './registry.js';
+export { loadConfig, saveConfig, configPath } from './config.js';
 ```
 
 - [ ] **Step 5: Commit**
@@ -360,6 +368,7 @@ git commit -m "feat(core): add types and plugin interface"
 ### Task 3: Core HTTP Server
 
 **Files:**
+
 - Create: `packages/core/src/server.ts`
 - Test: `packages/core/test/server.test.ts`
 
@@ -368,16 +377,16 @@ git commit -m "feat(core): add types and plugin interface"
 Create `packages/core/test/server.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import http from "node:http";
-import { BridgeServer } from "../src/server.js";
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import http from 'node:http';
+import { BridgeServer } from '../src/server.js';
 
 function fetchJson(url: string, options?: http.RequestOptions): Promise<any> {
   return new Promise((resolve, reject) => {
     const req = http.get(url, options, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
         try {
           resolve({ status: res.statusCode, body: JSON.parse(data) });
         } catch {
@@ -385,16 +394,16 @@ function fetchJson(url: string, options?: http.RequestOptions): Promise<any> {
         }
       });
     });
-    req.on("error", reject);
+    req.on('error', reject);
   });
 }
 
-describe("BridgeServer", () => {
+describe('BridgeServer', () => {
   let server: BridgeServer;
   let baseUrl: string;
 
   beforeAll(async () => {
-    server = new BridgeServer({ port: 0, host: "127.0.0.1" });
+    server = new BridgeServer({ port: 0, host: '127.0.0.1' });
     await server.start();
     const address = server.address();
     baseUrl = `http://127.0.0.1:${(address as any).port}`;
@@ -404,14 +413,14 @@ describe("BridgeServer", () => {
     await server.stop();
   });
 
-  it("returns health status", async () => {
+  it('returns health status', async () => {
     const res = await fetchJson(`${baseUrl}/health`);
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
-    expect(res.body.service).toBe("llm-bridge");
+    expect(res.body.service).toBe('llm-bridge');
   });
 
-  it("returns 404 for unknown routes", async () => {
+  it('returns 404 for unknown routes', async () => {
     const res = await fetchJson(`${baseUrl}/unknown`);
     expect(res.status).toBe(404);
   });
@@ -423,16 +432,17 @@ describe("BridgeServer", () => {
 ```bash
 cd packages/core && npx vitest run test/server.test.ts
 ```
+
 Expected: FAIL with "Cannot find module '../src/server.js'"
 
 - [ ] **Step 3: Create packages/core/src/server.ts**
 
 ```typescript
-import http, { IncomingMessage, ServerResponse } from "node:http";
-import { BridgeConfig, DefaultConfig } from "./types.js";
-import { parseChatRequest } from "./parser.js";
-import { PluginRegistry } from "./registry.js";
-import { SessionStore } from "./session.js";
+import http, { IncomingMessage, ServerResponse } from 'node:http';
+import { BridgeConfig, DefaultConfig } from './types.js';
+import { parseChatRequest } from './parser.js';
+import { PluginRegistry } from './registry.js';
+import { SessionStore } from './session.js';
 
 export class BridgeServer {
   private server: http.Server | null = null;
@@ -449,9 +459,9 @@ export class BridgeServer {
   async start(): Promise<void> {
     this.server = http.createServer((req, res) => {
       this.handleRequest(req, res).catch((err) => {
-        console.error("[llm-bridge] unhandled error:", err);
+        console.error('[llm-bridge] unhandled error:', err);
         if (!res.headersSent) {
-          this.jsonResponse(res, 500, { error: { message: "internal error", type: "internal" } });
+          this.jsonResponse(res, 500, { error: { message: 'internal error', type: 'internal' } });
         }
       });
     });
@@ -459,7 +469,7 @@ export class BridgeServer {
     return new Promise((resolve) => {
       this.server!.listen(this.config.port, this.config.host, () => {
         const address = this.server!.address();
-        const port = typeof address === "object" ? address?.port : this.config.port;
+        const port = typeof address === 'object' ? address?.port : this.config.port;
         console.error(`[llm-bridge] listening on http://${this.config.host}:${port}`);
         resolve();
       });
@@ -473,36 +483,38 @@ export class BridgeServer {
     });
   }
 
-  address(): import("net").AddressInfo | string | null {
+  address(): import('net').AddressInfo | string | null {
     return this.server?.address() ?? null;
   }
 
   private async handleRequest(req: IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? "/", `http://${this.config.host}`);
-    const path = url.pathname.replace(/\/+$/, "") || "/";
+    const url = new URL(req.url ?? '/', `http://${this.config.host}`);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
 
-    if (req.method === "GET" && path === "/health") {
-      this.jsonResponse(res, 200, { ok: true, service: "llm-bridge" });
+    if (req.method === 'GET' && path === '/health') {
+      this.jsonResponse(res, 200, { ok: true, service: 'llm-bridge' });
       return;
     }
 
-    if (req.method === "GET" && path === "/v1/models") {
+    if (req.method === 'GET' && path === '/v1/models') {
       await this.handleModels(req, res);
       return;
     }
 
-    if (req.method === "POST" && path === "/v1/chat/completions") {
+    if (req.method === 'POST' && path === '/v1/chat/completions') {
       await this.handleChatCompletions(req, res);
       return;
     }
 
-    this.jsonResponse(res, 404, { error: { message: `Not found: ${path}`, type: "not_found" } });
+    this.jsonResponse(res, 404, { error: { message: `Not found: ${path}`, type: 'not_found' } });
   }
 
   private async handleModels(_req: IncomingMessage, res: http.ServerResponse): Promise<void> {
     const plugin = this.registry.getActivePlugin();
     if (!plugin) {
-      this.jsonResponse(res, 503, { error: { message: "No active plugin configured", type: "configuration_error" } });
+      this.jsonResponse(res, 503, {
+        error: { message: 'No active plugin configured', type: 'configuration_error' },
+      });
       return;
     }
 
@@ -510,30 +522,37 @@ export class BridgeServer {
       const config = this.config.plugins[plugin.name] ?? {};
       const models = await plugin.listModels(config);
       this.jsonResponse(res, 200, {
-        object: "list",
+        object: 'list',
         data: models.map((m) => ({
           id: m.id,
-          object: "model",
+          object: 'model',
           created: Math.floor(Date.now() / 1000),
           owned_by: plugin.name,
         })),
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      this.jsonResponse(res, 502, { error: { message: msg, type: "provider_error" } });
+      this.jsonResponse(res, 502, { error: { message: msg, type: 'provider_error' } });
     }
   }
 
-  private async handleChatCompletions(req: IncomingMessage, res: http.ServerResponse): Promise<void> {
+  private async handleChatCompletions(
+    req: IncomingMessage,
+    res: http.ServerResponse,
+  ): Promise<void> {
     const plugin = this.registry.getActivePlugin();
     if (!plugin) {
-      this.jsonResponse(res, 503, { error: { message: "No active plugin configured", type: "configuration_error" } });
+      this.jsonResponse(res, 503, {
+        error: { message: 'No active plugin configured', type: 'configuration_error' },
+      });
       return;
     }
 
     const parsed = await parseChatRequest(req);
     if (!parsed.success) {
-      this.jsonResponse(res, 400, { error: { message: parsed.error, type: "invalid_request_error" } });
+      this.jsonResponse(res, 400, {
+        error: { message: parsed.error, type: 'invalid_request_error' },
+      });
       return;
     }
 
@@ -542,13 +561,13 @@ export class BridgeServer {
     try {
       const config = this.config.plugins[plugin.name] ?? {};
       const session = await plugin.createSession(config, model);
-      const sessionId = req.headers["x-session-id"] as string | undefined;
+      const sessionId = req.headers['x-session-id'] as string | undefined;
       this.sessions.set(sessionId ?? crypto.randomUUID(), session);
 
       res.writeHead(200, {
-        "Content-Type": stream ? "text/event-stream; charset=utf-8" : "application/json",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        'Content-Type': stream ? 'text/event-stream; charset=utf-8' : 'application/json',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       });
 
       const chunks: string[] = [];
@@ -556,7 +575,7 @@ export class BridgeServer {
         if (stream) {
           res.write(this.formatSSEChunk(chunk, model));
         } else {
-          if (chunk.type === "text" && chunk.content) {
+          if (chunk.type === 'text' && chunk.content) {
             chunks.push(chunk.content);
           }
         }
@@ -566,14 +585,16 @@ export class BridgeServer {
         const completionId = `chatcmpl-${crypto.randomUUID()}`;
         this.jsonResponseRaw(res, 200, {
           id: completionId,
-          object: "chat.completion",
+          object: 'chat.completion',
           created: Math.floor(Date.now() / 1000),
           model,
-          choices: [{
-            index: 0,
-            message: { role: "assistant", content: chunks.join("") },
-            finish_reason: "stop",
-          }],
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: chunks.join('') },
+              finish_reason: 'stop',
+            },
+          ],
           usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
         });
       } else {
@@ -585,10 +606,12 @@ export class BridgeServer {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (stream && !res.writableEnded) {
-        res.write(`data: ${JSON.stringify({ error: { message: msg, type: "provider_error" } })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ error: { message: msg, type: 'provider_error' } })}\n\n`,
+        );
         res.end();
       } else if (!res.headersSent) {
-        this.jsonResponse(res, 502, { error: { message: msg, type: "provider_error" } });
+        this.jsonResponse(res, 502, { error: { message: msg, type: 'provider_error' } });
       }
     }
   }
@@ -598,16 +621,18 @@ export class BridgeServer {
     const delta: Record<string, unknown> = {};
     let finishReason: string | null = null;
 
-    if (chunk.type === "text" && chunk.content) {
+    if (chunk.type === 'text' && chunk.content) {
       delta.content = chunk.content;
     }
-    if (chunk.type === "tool_call" && chunk.toolCall) {
-      delta.tool_calls = [{
-        index: 0,
-        id: chunk.toolCall.id,
-        type: "function",
-        function: { name: chunk.toolCall.name, arguments: chunk.toolCall.arguments },
-      }];
+    if (chunk.type === 'tool_call' && chunk.toolCall) {
+      delta.tool_calls = [
+        {
+          index: 0,
+          id: chunk.toolCall.id,
+          type: 'function',
+          function: { name: chunk.toolCall.name, arguments: chunk.toolCall.arguments },
+        },
+      ];
     }
     if (chunk.finishReason) {
       finishReason = chunk.finishReason;
@@ -615,7 +640,7 @@ export class BridgeServer {
 
     const payload = {
       id: completionId,
-      object: "chat.completion.chunk",
+      object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
       model,
       choices: [{ index: 0, delta, finish_reason: finishReason }],
@@ -625,12 +650,12 @@ export class BridgeServer {
   }
 
   private jsonResponse(res: http.ServerResponse, status: number, body: unknown): void {
-    res.writeHead(status, { "Content-Type": "application/json" });
+    res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
   }
 
   private jsonResponseRaw(res: http.ServerResponse, status: number, body: unknown): void {
-    res.writeHead(status, { "Content-Type": "application/json" });
+    res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
   }
 
@@ -649,6 +674,7 @@ export class BridgeServer {
 ```bash
 cd packages/core && npx vitest run test/server.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -663,6 +689,7 @@ git commit -m "feat(core): add HTTP server with health and routing"
 ### Task 4: Session Store
 
 **Files:**
+
 - Create: `packages/core/src/session.ts`
 - Test: `packages/core/test/session.test.ts`
 
@@ -671,9 +698,9 @@ git commit -m "feat(core): add HTTP server with health and routing"
 Create `packages/core/test/session.test.ts`:
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SessionStore } from "../src/session.js";
-import type { BridgeSession } from "../src/types.js";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SessionStore } from '../src/session.js';
+import type { BridgeSession } from '../src/types.js';
 
 function mockSession(): BridgeSession {
   return {
@@ -682,7 +709,7 @@ function mockSession(): BridgeSession {
   };
 }
 
-describe("SessionStore", () => {
+describe('SessionStore', () => {
   let store: SessionStore;
 
   beforeEach(() => {
@@ -690,30 +717,30 @@ describe("SessionStore", () => {
     store = new SessionStore(1800);
   });
 
-  it("stores and retrieves sessions", () => {
+  it('stores and retrieves sessions', () => {
     const session = mockSession();
-    store.set("test-id", session);
-    expect(store.get("test-id")).toBe(session);
+    store.set('test-id', session);
+    expect(store.get('test-id')).toBe(session);
   });
 
-  it("returns undefined for missing sessions", () => {
-    expect(store.get("nonexistent")).toBeUndefined();
+  it('returns undefined for missing sessions', () => {
+    expect(store.get('nonexistent')).toBeUndefined();
   });
 
-  it("disposes expired sessions", async () => {
+  it('disposes expired sessions', async () => {
     const session = mockSession();
-    store.set("test-id", session);
+    store.set('test-id', session);
     vi.advanceTimersByTime(1801 * 1000);
     store.cleanup();
-    expect(store.get("test-id")).toBeUndefined();
+    expect(store.get('test-id')).toBeUndefined();
     expect(session.dispose).toHaveBeenCalled();
   });
 
-  it("disposes all sessions", async () => {
+  it('disposes all sessions', async () => {
     const s1 = mockSession();
     const s2 = mockSession();
-    store.set("id1", s1);
-    store.set("id2", s2);
+    store.set('id1', s1);
+    store.set('id2', s2);
     await store.disposeAll();
     expect(s1.dispose).toHaveBeenCalled();
     expect(s2.dispose).toHaveBeenCalled();
@@ -726,12 +753,13 @@ describe("SessionStore", () => {
 ```bash
 cd packages/core && npx vitest run test/session.test.ts
 ```
+
 Expected: FAIL with "Cannot find module '../src/session.js'"
 
 - [ ] **Step 3: Create packages/core/src/session.ts**
 
 ```typescript
-import type { BridgeSession } from "./types.js";
+import type { BridgeSession } from './types.js';
 
 interface SessionEntry {
   session: BridgeSession;
@@ -774,8 +802,8 @@ export class SessionStore {
   async disposeAll(): Promise<void> {
     const disposals = Array.from(this.sessions.values()).map((entry) =>
       entry.session.dispose().catch((err) => {
-        console.error("[session] disposeAll error:", err);
-      })
+        console.error('[session] disposeAll error:', err);
+      }),
     );
     this.sessions.clear();
     await Promise.all(disposals);
@@ -792,6 +820,7 @@ export class SessionStore {
 ```bash
 cd packages/core && npx vitest run test/session.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -806,6 +835,7 @@ git commit -m "feat(core): add session store with TTL cleanup"
 ### Task 5: Request Parser
 
 **Files:**
+
 - Create: `packages/core/src/parser.ts`
 - Test: `packages/core/test/parser.test.ts`
 
@@ -814,53 +844,53 @@ git commit -m "feat(core): add session store with TTL cleanup"
 Create `packages/core/test/parser.test.ts`:
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { parseChatRequest } from "../src/parser.js";
-import http from "node:http";
+import { describe, it, expect } from 'vitest';
+import { parseChatRequest } from '../src/parser.js';
+import http from 'node:http';
 
 function createRequest(body: any, headers: Record<string, string> = {}): http.IncomingMessage {
   const req = new http.IncomingMessage({} as any);
-  req.headers = { "content-type": "application/json", ...headers };
+  req.headers = { 'content-type': 'application/json', ...headers };
   (req as any)._read = () => {};
   process.nextTick(() => {
-    req.emit("data", Buffer.from(JSON.stringify(body)));
-    req.emit("end");
+    req.emit('data', Buffer.from(JSON.stringify(body)));
+    req.emit('end');
   });
   return req;
 }
 
-describe("parseChatRequest", () => {
-  it("parses valid chat request", async () => {
+describe('parseChatRequest', () => {
+  it('parses valid chat request', async () => {
     const req = createRequest({
-      model: "composer-2",
-      messages: [{ role: "user", content: "Hello" }],
+      model: 'composer-2',
+      messages: [{ role: 'user', content: 'Hello' }],
       stream: true,
     });
     const result = await parseChatRequest(req);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.model).toBe("composer-2");
+      expect(result.data.model).toBe('composer-2');
       expect(result.data.messages).toHaveLength(1);
       expect(result.data.stream).toBe(true);
     }
   });
 
-  it("rejects missing model", async () => {
-    const req = createRequest({ messages: [{ role: "user", content: "Hello" }] });
+  it('rejects missing model', async () => {
+    const req = createRequest({ messages: [{ role: 'user', content: 'Hello' }] });
     const result = await parseChatRequest(req);
     expect(result.success).toBe(false);
   });
 
-  it("rejects missing messages", async () => {
-    const req = createRequest({ model: "composer-2" });
+  it('rejects missing messages', async () => {
+    const req = createRequest({ model: 'composer-2' });
     const result = await parseChatRequest(req);
     expect(result.success).toBe(false);
   });
 
-  it("defaults stream to false", async () => {
+  it('defaults stream to false', async () => {
     const req = createRequest({
-      model: "composer-2",
-      messages: [{ role: "user", content: "Hello" }],
+      model: 'composer-2',
+      messages: [{ role: 'user', content: 'Hello' }],
     });
     const result = await parseChatRequest(req);
     expect(result.success).toBe(true);
@@ -876,18 +906,19 @@ describe("parseChatRequest", () => {
 ```bash
 cd packages/core && npx vitest run test/parser.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Create packages/core/src/parser.ts**
 
 ```typescript
-import http from "node:http";
-import { z } from "zod";
-import { MessageSchema, ToolDefinitionSchema } from "./types.js";
+import http from 'node:http';
+import { z } from 'zod';
+import { MessageSchema, ToolDefinitionSchema } from './types.js';
 
 const ChatRequestSchema = z.object({
-  model: z.string().min(1, "model is required"),
-  messages: z.array(MessageSchema).min(1, "messages must have at least one message"),
+  model: z.string().min(1, 'model is required'),
+  messages: z.array(MessageSchema).min(1, 'messages must have at least one message'),
   stream: z.boolean().optional().default(false),
   tools: z.array(ToolDefinitionSchema).optional(),
   tool_choice: z.unknown().optional(),
@@ -896,7 +927,7 @@ const ChatRequestSchema = z.object({
 export type ParsedChatRequest = z.infer<typeof ChatRequestSchema>;
 
 export async function parseChatRequest(
-  req: http.IncomingMessage
+  req: http.IncomingMessage,
 ): Promise<{ success: true; data: ParsedChatRequest } | { success: false; error: string }> {
   try {
     const body = await readBody(req);
@@ -908,22 +939,24 @@ export async function parseChatRequest(
     return { success: true, data: result.data };
   } catch (e) {
     if (e instanceof SyntaxError) {
-      return { success: false, error: "Invalid JSON body" };
+      return { success: false, error: 'Invalid JSON body' };
     }
-    return { success: false, error: e instanceof Error ? e.message : "Unknown error" };
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
   }
 }
 
-export function parseModelsRequest(_req: http.IncomingMessage): { success: true } | { success: false; error: string } {
+export function parseModelsRequest(
+  _req: http.IncomingMessage,
+): { success: true } | { success: false; error: string } {
   return { success: true };
 }
 
 function readBody(req: http.IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (c) => chunks.push(c as Buffer));
-    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-    req.on("error", reject);
+    req.on('data', (c) => chunks.push(c as Buffer));
+    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('error', reject);
   });
 }
 ```
@@ -933,6 +966,7 @@ function readBody(req: http.IncomingMessage): Promise<string> {
 ```bash
 cd packages/core && npx vitest run test/parser.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -947,6 +981,7 @@ git commit -m "feat(core): add OpenAI request parser with zod validation"
 ### Task 6: Response Formatter
 
 **Files:**
+
 - Create: `packages/core/src/formatter.ts`
 - Test: `packages/core/test/formatter.test.ts`
 
@@ -955,42 +990,42 @@ git commit -m "feat(core): add OpenAI request parser with zod validation"
 Create `packages/core/test/formatter.test.ts`:
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { formatStreamChunk, formatCompletion } from "../src/formatter.js";
-import type { StreamChunk } from "../src/types.js";
+import { describe, it, expect } from 'vitest';
+import { formatStreamChunk, formatCompletion } from '../src/formatter.js';
+import type { StreamChunk } from '../src/types.js';
 
-describe("formatStreamChunk", () => {
-  it("formats text delta as SSE", () => {
-    const chunk: StreamChunk = { type: "text", content: "Hello" };
-    const result = formatStreamChunk(chunk, "composer-2", "chatcmpl-test");
-    expect(result).toContain("data:");
+describe('formatStreamChunk', () => {
+  it('formats text delta as SSE', () => {
+    const chunk: StreamChunk = { type: 'text', content: 'Hello' };
+    const result = formatStreamChunk(chunk, 'composer-2', 'chatcmpl-test');
+    expect(result).toContain('data:');
     expect(result).toContain('"content":"Hello"');
     expect(result).toContain('"model":"composer-2"');
   });
 
-  it("formats tool call as SSE", () => {
+  it('formats tool call as SSE', () => {
     const chunk: StreamChunk = {
-      type: "tool_call",
-      toolCall: { id: "tc-1", name: "search", arguments: '{"q":"test"}' },
+      type: 'tool_call',
+      toolCall: { id: 'tc-1', name: 'search', arguments: '{"q":"test"}' },
     };
-    const result = formatStreamChunk(chunk, "composer-2", "chatcmpl-test");
+    const result = formatStreamChunk(chunk, 'composer-2', 'chatcmpl-test');
     expect(result).toContain('"tool_calls"');
     expect(result).toContain('"name":"search"');
   });
 
-  it("formats done chunk with finish_reason", () => {
-    const chunk: StreamChunk = { type: "done", finishReason: "stop" };
-    const result = formatStreamChunk(chunk, "composer-2", "chatcmpl-test");
+  it('formats done chunk with finish_reason', () => {
+    const chunk: StreamChunk = { type: 'done', finishReason: 'stop' };
+    const result = formatStreamChunk(chunk, 'composer-2', 'chatcmpl-test');
     expect(result).toContain('"finish_reason":"stop"');
   });
 });
 
-describe("formatCompletion", () => {
-  it("formats non-streaming completion", () => {
-    const result = formatCompletion("Hello world", "composer-2", "chatcmpl-test");
-    expect(result.id).toBe("chatcmpl-test");
-    expect(result.choices[0].message.content).toBe("Hello world");
-    expect(result.choices[0].finish_reason).toBe("stop");
+describe('formatCompletion', () => {
+  it('formats non-streaming completion', () => {
+    const result = formatCompletion('Hello world', 'composer-2', 'chatcmpl-test');
+    expect(result.id).toBe('chatcmpl-test');
+    expect(result.choices[0].message.content).toBe('Hello world');
+    expect(result.choices[0].finish_reason).toBe('stop');
   });
 });
 ```
@@ -1000,32 +1035,31 @@ describe("formatCompletion", () => {
 ```bash
 cd packages/core && npx vitest run test/formatter.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Create packages/core/src/formatter.ts**
 
 ```typescript
-import type { StreamChunk } from "./types.js";
+import type { StreamChunk } from './types.js';
 
-export function formatStreamChunk(
-  chunk: StreamChunk,
-  model: string,
-  completionId: string
-): string {
+export function formatStreamChunk(chunk: StreamChunk, model: string, completionId: string): string {
   const delta: Record<string, unknown> = {};
   let finishReason: string | null = null;
 
-  if (chunk.type === "text" && chunk.content) {
+  if (chunk.type === 'text' && chunk.content) {
     delta.content = chunk.content;
   }
 
-  if (chunk.type === "tool_call" && chunk.toolCall) {
-    delta.tool_calls = [{
-      index: 0,
-      id: chunk.toolCall.id,
-      type: "function",
-      function: { name: chunk.toolCall.name, arguments: chunk.toolCall.arguments },
-    }];
+  if (chunk.type === 'tool_call' && chunk.toolCall) {
+    delta.tool_calls = [
+      {
+        index: 0,
+        id: chunk.toolCall.id,
+        type: 'function',
+        function: { name: chunk.toolCall.name, arguments: chunk.toolCall.arguments },
+      },
+    ];
   }
 
   if (chunk.finishReason) {
@@ -1034,7 +1068,7 @@ export function formatStreamChunk(
 
   const payload = {
     id: completionId,
-    object: "chat.completion.chunk",
+    object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
     model,
     choices: [{ index: 0, delta, finish_reason: finishReason }],
@@ -1046,18 +1080,20 @@ export function formatStreamChunk(
 export function formatCompletion(
   content: string,
   model: string,
-  completionId: string
+  completionId: string,
 ): Record<string, unknown> {
   return {
     id: completionId,
-    object: "chat.completion",
+    object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
     model,
-    choices: [{
-      index: 0,
-      message: { role: "assistant", content },
-      finish_reason: "stop",
-    }],
+    choices: [
+      {
+        index: 0,
+        message: { role: 'assistant', content },
+        finish_reason: 'stop',
+      },
+    ],
     usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
   };
 }
@@ -1068,6 +1104,7 @@ export function formatCompletion(
 ```bash
 cd packages/core && npx vitest run test/formatter.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -1082,6 +1119,7 @@ git commit -m "feat(core): add OpenAI response formatter"
 ### Task 7: Plugin Registry
 
 **Files:**
+
 - Create: `packages/core/src/registry.ts`
 - Test: `packages/core/test/registry.test.ts`
 
@@ -1090,14 +1128,14 @@ git commit -m "feat(core): add OpenAI response formatter"
 Create `packages/core/test/registry.test.ts`:
 
 ```typescript
-import { describe, it, expect, vi } from "vitest";
-import { PluginRegistry } from "../src/registry.js";
-import type { BridgePlugin } from "../src/types.js";
+import { describe, it, expect, vi } from 'vitest';
+import { PluginRegistry } from '../src/registry.js';
+import type { BridgePlugin } from '../src/types.js';
 
 function mockPlugin(name: string): BridgePlugin {
   return {
     name,
-    version: "1.0.0",
+    version: '1.0.0',
     authenticate: vi.fn().mockResolvedValue(true),
     listModels: vi.fn().mockResolvedValue([]),
     createSession: vi.fn().mockResolvedValue({
@@ -1107,39 +1145,39 @@ function mockPlugin(name: string): BridgePlugin {
   };
 }
 
-describe("PluginRegistry", () => {
-  it("registers and retrieves plugins", () => {
+describe('PluginRegistry', () => {
+  it('registers and retrieves plugins', () => {
     const registry = new PluginRegistry();
-    const plugin = mockPlugin("test");
+    const plugin = mockPlugin('test');
     registry.register(plugin);
-    expect(registry.getPlugin("test")).toBe(plugin);
+    expect(registry.getPlugin('test')).toBe(plugin);
   });
 
-  it("returns undefined for unknown plugins", () => {
+  it('returns undefined for unknown plugins', () => {
     const registry = new PluginRegistry();
-    expect(registry.getPlugin("nonexistent")).toBeUndefined();
+    expect(registry.getPlugin('nonexistent')).toBeUndefined();
   });
 
-  it("sets active plugin", () => {
+  it('sets active plugin', () => {
     const registry = new PluginRegistry();
-    registry.register(mockPlugin("cursor"));
-    registry.setActive("cursor");
-    expect(registry.getActivePlugin()?.name).toBe("cursor");
+    registry.register(mockPlugin('cursor'));
+    registry.setActive('cursor');
+    expect(registry.getActivePlugin()?.name).toBe('cursor');
   });
 
-  it("returns null when no active plugin is set", () => {
+  it('returns null when no active plugin is set', () => {
     const registry = new PluginRegistry();
-    registry.register(mockPlugin("cursor"));
+    registry.register(mockPlugin('cursor'));
     expect(registry.getActivePlugin()).toBeNull();
   });
 
-  it("lists all registered plugins", () => {
+  it('lists all registered plugins', () => {
     const registry = new PluginRegistry();
-    registry.register(mockPlugin("cursor"));
-    registry.register(mockPlugin("copilot"));
+    registry.register(mockPlugin('cursor'));
+    registry.register(mockPlugin('copilot'));
     const names = registry.listPlugins().map((p) => p.name);
-    expect(names).toContain("cursor");
-    expect(names).toContain("copilot");
+    expect(names).toContain('cursor');
+    expect(names).toContain('copilot');
   });
 });
 ```
@@ -1149,12 +1187,13 @@ describe("PluginRegistry", () => {
 ```bash
 cd packages/core && npx vitest run test/registry.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Create packages/core/src/registry.ts**
 
 ```typescript
-import type { BridgePlugin, PluginHealth } from "./types.js";
+import type { BridgePlugin, PluginHealth } from './types.js';
 
 export class PluginRegistry {
   private plugins: Map<string, BridgePlugin> = new Map();
@@ -1210,6 +1249,7 @@ export class PluginRegistry {
 ```bash
 cd packages/core && npx vitest run test/registry.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -1224,6 +1264,7 @@ git commit -m "feat(core): add plugin registry with health tracking"
 ### Task 8: Config Loader
 
 **Files:**
+
 - Create: `packages/core/src/config.ts`
 - Test: `packages/core/test/config.test.ts`
 
@@ -1232,36 +1273,43 @@ git commit -m "feat(core): add plugin registry with health tracking"
 Create `packages/core/test/config.test.ts`:
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loadConfig, saveConfig, configPath } from "../src/config.js";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { loadConfig, saveConfig, configPath } from '../src/config.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-describe("config", () => {
+describe('config', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "llm-bridge-config-"));
-    vi.spyOn(os, "homedir").mockReturnValue(tmpDir);
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'llm-bridge-config-'));
+    vi.spyOn(os, 'homedir').mockReturnValue(tmpDir);
   });
 
-  it("returns default config when no file exists", () => {
+  it('returns default config when no file exists', () => {
     const config = loadConfig();
-    expect(config.activePlugin).toBe("cursor");
+    expect(config.activePlugin).toBe('cursor');
     expect(config.port).toBe(3849);
   });
 
-  it("loads config from file", () => {
-    const configDir = path.join(tmpDir, ".config", "llm-bridge");
+  it('loads config from file', () => {
+    const configDir = path.join(tmpDir, '.config', 'llm-bridge');
     fs.mkdirSync(configDir, { recursive: true });
-    const configData = { activePlugin: "cursor", port: 9999, plugins: {}, host: "127.0.0.1", sessionTTL: 1800, toolMode: "lenient" as const };
+    const configData = {
+      activePlugin: 'cursor',
+      port: 9999,
+      plugins: {},
+      host: '127.0.0.1',
+      sessionTTL: 1800,
+      toolMode: 'lenient' as const,
+    };
     fs.writeFileSync(configPath(), JSON.stringify(configData));
     const config = loadConfig();
     expect(config.port).toBe(9999);
   });
 
-  it("saves config to file", () => {
+  it('saves config to file', () => {
     const config = loadConfig();
     config.port = 5555;
     saveConfig(config);
@@ -1276,19 +1324,20 @@ describe("config", () => {
 ```bash
 cd packages/core && npx vitest run test/config.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Create packages/core/src/config.ts**
 
 ```typescript
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
-import { BridgeConfig, DefaultConfig } from "./types.js";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { BridgeConfig, DefaultConfig } from './types.js';
 
 export function configPath(): string {
   const home = os.homedir();
-  return path.join(home, ".config", "llm-bridge", "config.json");
+  return path.join(home, '.config', 'llm-bridge', 'config.json');
 }
 
 export function loadConfig(): BridgeConfig {
@@ -1298,7 +1347,7 @@ export function loadConfig(): BridgeConfig {
   try {
     const filePath = process.env.LLM_BRIDGE_CONFIG ?? configPath();
     if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf8");
+      const raw = fs.readFileSync(filePath, 'utf8');
       const fileConfig = JSON.parse(raw) as Partial<BridgeConfig>;
       const config = { ...DefaultConfig, ...fileConfig };
       if (envPort) config.port = parseInt(envPort, 10);
@@ -1306,7 +1355,7 @@ export function loadConfig(): BridgeConfig {
       return config;
     }
   } catch (err) {
-    console.warn("[llm-bridge] failed to load config file, using defaults:", err);
+    console.warn('[llm-bridge] failed to load config file, using defaults:', err);
   }
 
   const config = { ...DefaultConfig };
@@ -1328,6 +1377,7 @@ export function saveConfig(config: BridgeConfig): void {
 ```bash
 cd packages/core && npx vitest run test/config.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
@@ -1342,6 +1392,7 @@ git commit -m "feat(core): add config loader with file and env support"
 ### Task 9: Cursor Plugin Implementation
 
 **Files:**
+
 - Create: `packages/cursor/package.json`, `packages/cursor/tsconfig.json`, `packages/cursor/src/index.ts`, `packages/cursor/src/plugin.ts`, `packages/cursor/src/session.ts`, `packages/cursor/src/tools.ts`
 - Test: `packages/cursor/test/plugin.test.ts`, `packages/cursor/test/tools.test.ts`
 
@@ -1388,10 +1439,10 @@ git commit -m "feat(core): add config loader with file and env support"
 - [ ] **Step 3: Create packages/cursor/src/tools.ts**
 
 ```typescript
-import type { ToolDefinition } from "@llm-bridge/core";
+import type { ToolDefinition } from '@llm-bridge/core';
 
 export interface CursorTool {
-  type: "function";
+  type: 'function';
   function: {
     name: string;
     description?: string;
@@ -1401,7 +1452,7 @@ export interface CursorTool {
 
 export function translateTools(tools: ToolDefinition[]): CursorTool[] {
   return tools.map((tool) => ({
-    type: "function" as const,
+    type: 'function' as const,
     function: {
       name: tool.function.name,
       description: tool.function.description,
@@ -1418,9 +1469,9 @@ export function translateToolResult(toolCallId: string, result: string): string 
 - [ ] **Step 4: Create packages/cursor/src/session.ts**
 
 ```typescript
-import { Agent } from "@cursor/sdk";
-import type { BridgeSession, Message, ToolDefinition, StreamChunk } from "@llm-bridge/core";
-import { translateTools, translateToolResult } from "./tools.js";
+import { Agent } from '@cursor/sdk';
+import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '@llm-bridge/core';
+import { translateTools, translateToolResult } from './tools.js';
 
 export class CursorBridgeSession implements BridgeSession {
   private agent: Agent | null = null;
@@ -1449,22 +1500,26 @@ export class CursorBridgeSession implements BridgeSession {
         model: { id: this.modelId },
         tools: cursorTools,
         onDelta: ({ update }: { update: { type: string; text?: string } }) => {
-          if (update.type === "text-delta" && update.text) {
+          if (update.type === 'text-delta' && update.text) {
             // Note: onDelta is synchronous callback, we buffer and yield in the loop
           }
         },
       });
 
       const result = await run.wait();
-      if (result.status === "error" || result.status === "cancelled") {
-        yield { type: "error", content: `Agent run ${result.status}: ${result.result ?? "no details"}`, finishReason: "error" };
+      if (result.status === 'error' || result.status === 'cancelled') {
+        yield {
+          type: 'error',
+          content: `Agent run ${result.status}: ${result.result ?? 'no details'}`,
+          finishReason: 'error',
+        };
         return;
       }
 
-      yield { type: "text", content: result.result ?? "", finishReason: "stop" };
+      yield { type: 'text', content: result.result ?? '', finishReason: 'stop' };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      yield { type: "error", content: msg, finishReason: "error" };
+      yield { type: 'error', content: msg, finishReason: 'error' };
     }
   }
 
@@ -1482,12 +1537,12 @@ export class CursorBridgeSession implements BridgeSession {
   private buildPrompt(messages: Message[]): string {
     const blocks: string[] = [];
     for (const m of messages) {
-      const text = typeof m.content === "string" ? m.content : "";
+      const text = typeof m.content === 'string' ? m.content : '';
       if (!text) continue;
-      const label = m.role === "tool" ? `tool (${m.tool_call_id ?? m.name ?? "result"})` : m.role;
+      const label = m.role === 'tool' ? `tool (${m.tool_call_id ?? m.name ?? 'result'})` : m.role;
       blocks.push(`[${label}]\n${text}`);
     }
-    return `\nFollow this conversation transcript and reply as the assistant.\n\n${blocks.join("\n\n---\n\n")}\n`;
+    return `\nFollow this conversation transcript and reply as the assistant.\n\n${blocks.join('\n\n---\n\n')}\n`;
   }
 }
 ```
@@ -1495,13 +1550,13 @@ export class CursorBridgeSession implements BridgeSession {
 - [ ] **Step 5: Create packages/cursor/src/plugin.ts**
 
 ```typescript
-import { Cursor, Agent } from "@cursor/sdk";
-import type { BridgePlugin, BridgeSession, ModelInfo } from "@llm-bridge/core";
-import { CursorBridgeSession } from "./session.js";
+import { Cursor, Agent } from '@cursor/sdk';
+import type { BridgePlugin, BridgeSession, ModelInfo } from '@llm-bridge/core';
+import { CursorBridgeSession } from './session.js';
 
 export class CursorBridgePlugin implements BridgePlugin {
-  name = "cursor";
-  version = "2.0.0";
+  name = 'cursor';
+  version = '2.0.0';
 
   async authenticate(config: Record<string, string>): Promise<boolean> {
     const apiKey = config.CURSOR_API_KEY;
@@ -1516,7 +1571,7 @@ export class CursorBridgePlugin implements BridgePlugin {
 
   async listModels(config: Record<string, string>): Promise<ModelInfo[]> {
     const apiKey = config.CURSOR_API_KEY;
-    if (!apiKey) throw new Error("Missing CURSOR_API_KEY");
+    if (!apiKey) throw new Error('Missing CURSOR_API_KEY');
     const models = await Cursor.models.list({ apiKey });
     return models.map((m) => ({
       id: m.id,
@@ -1527,7 +1582,7 @@ export class CursorBridgePlugin implements BridgePlugin {
 
   async createSession(config: Record<string, string>, model: string): Promise<BridgeSession> {
     const apiKey = config.CURSOR_API_KEY;
-    if (!apiKey) throw new Error("Missing CURSOR_API_KEY");
+    if (!apiKey) throw new Error('Missing CURSOR_API_KEY');
     const cwd = config.CURSOR_OPENCODE_BRIDGE_CWD ?? process.cwd();
     return new CursorBridgeSession(apiKey, model, cwd);
   }
@@ -1537,8 +1592,8 @@ export class CursorBridgePlugin implements BridgePlugin {
 - [ ] **Step 6: Create packages/cursor/src/index.ts**
 
 ```typescript
-export { CursorBridgePlugin } from "./plugin.js";
-export { CursorBridgeSession } from "./session.js";
+export { CursorBridgePlugin } from './plugin.js';
+export { CursorBridgeSession } from './session.js';
 ```
 
 - [ ] **Step 7: Write tests for plugin**
@@ -1546,11 +1601,11 @@ export { CursorBridgeSession } from "./session.js";
 Create `packages/cursor/test/plugin.test.ts`:
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { CursorBridgePlugin } from "../src/plugin.js";
-import { Cursor } from "@cursor/sdk";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { CursorBridgePlugin } from '../src/plugin.js';
+import { Cursor } from '@cursor/sdk';
 
-vi.mock("@cursor/sdk", () => ({
+vi.mock('@cursor/sdk', () => ({
   Cursor: {
     me: vi.fn(),
     models: { list: vi.fn() },
@@ -1558,7 +1613,7 @@ vi.mock("@cursor/sdk", () => ({
   Agent: { create: vi.fn(), prompt: vi.fn() },
 }));
 
-describe("CursorBridgePlugin", () => {
+describe('CursorBridgePlugin', () => {
   let plugin: CursorBridgePlugin;
 
   beforeEach(() => {
@@ -1566,26 +1621,26 @@ describe("CursorBridgePlugin", () => {
     vi.clearAllMocks();
   });
 
-  it("authenticates with valid key", async () => {
-    (Cursor.me as any).mockResolvedValue({ id: "user-123" });
-    const result = await plugin.authenticate({ CURSOR_API_KEY: "cursor_test_key" });
+  it('authenticates with valid key', async () => {
+    (Cursor.me as any).mockResolvedValue({ id: 'user-123' });
+    const result = await plugin.authenticate({ CURSOR_API_KEY: 'cursor_test_key' });
     expect(result).toBe(true);
   });
 
-  it("fails authentication with missing key", async () => {
+  it('fails authentication with missing key', async () => {
     const result = await plugin.authenticate({});
     expect(result).toBe(false);
   });
 
-  it("lists models", async () => {
-    (Cursor.models.list as any).mockResolvedValue([{ id: "composer-2" }, { id: "sonnet" }]);
-    const models = await plugin.listModels({ CURSOR_API_KEY: "cursor_test_key" });
+  it('lists models', async () => {
+    (Cursor.models.list as any).mockResolvedValue([{ id: 'composer-2' }, { id: 'sonnet' }]);
+    const models = await plugin.listModels({ CURSOR_API_KEY: 'cursor_test_key' });
     expect(models).toHaveLength(2);
-    expect(models[0].id).toBe("composer-2");
+    expect(models[0].id).toBe('composer-2');
   });
 
-  it("throws on listModels without key", async () => {
-    await expect(plugin.listModels({})).rejects.toThrow("Missing CURSOR_API_KEY");
+  it('throws on listModels without key', async () => {
+    await expect(plugin.listModels({})).rejects.toThrow('Missing CURSOR_API_KEY');
   });
 });
 ```
@@ -1595,6 +1650,7 @@ describe("CursorBridgePlugin", () => {
 ```bash
 cd packages/cursor && npx vitest run
 ```
+
 Expected: PASS
 
 - [ ] **Step 9: Commit**
@@ -1609,6 +1665,7 @@ git commit -m "feat(cursor): implement Cursor bridge plugin with SDK integration
 ### Task 10: MCP Server
 
 **Files:**
+
 - Create: `packages/mcp/package.json`, `packages/mcp/tsconfig.json`, `packages/mcp/src/index.ts`, `packages/mcp/src/server.ts`
 - Test: `packages/mcp/test/server.test.ts`
 
@@ -1658,13 +1715,13 @@ git commit -m "feat(cursor): implement Cursor bridge plugin with SDK integration
 - [ ] **Step 3: Create packages/mcp/src/server.ts**
 
 ```typescript
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import http from "node:http";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
+import http from 'node:http';
 
-const BRIDGE_PORT = Number(process.env.LLM_BRIDGE_PORT ?? "3849");
-const BRIDGE_HOST = process.env.LLM_BRIDGE_HOST ?? "127.0.0.1";
+const BRIDGE_PORT = Number(process.env.LLM_BRIDGE_PORT ?? '3849');
+const BRIDGE_HOST = process.env.LLM_BRIDGE_HOST ?? '127.0.0.1';
 
 function bridgeUrl(path: string): string {
   return `http://${BRIDGE_HOST}:${BRIDGE_PORT}${path}`;
@@ -1672,91 +1729,97 @@ function bridgeUrl(path: string): string {
 
 function fetchJson(url: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    http.get(url, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => {
-        try {
-          resolve({ status: res.statusCode, body: JSON.parse(data) });
-        } catch {
-          resolve({ status: res.statusCode, body: data });
-        }
-      });
-    }).on("error", reject);
+    http
+      .get(url, (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve({ status: res.statusCode, body: JSON.parse(data) });
+          } catch {
+            resolve({ status: res.statusCode, body: data });
+          }
+        });
+      })
+      .on('error', reject);
   });
 }
 
 const mcpServer = new McpServer(
-  { name: "llm-bridge-mcp", version: "2.0.0" },
+  { name: 'llm-bridge-mcp', version: '2.0.0' },
   {
-    instructions: "Manage llm-bridge: check status, list models, generate OpenCode config.",
-  }
+    instructions: 'Manage llm-bridge: check status, list models, generate OpenCode config.',
+  },
 );
 
 mcpServer.registerTool(
-  "bridge_status",
-  { description: "Check llm-bridge server health and status." },
+  'bridge_status',
+  { description: 'Check llm-bridge server health and status.' },
   async () => {
     try {
-      const res = await fetchJson(bridgeUrl("/health"));
+      const res = await fetchJson(bridgeUrl('/health'));
       if (res.status === 200) {
-        return { content: [{ type: "text", text: JSON.stringify(res.body, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(res.body, null, 2) }] };
       }
-      return { content: [{ type: "text", text: `Bridge unhealthy: status ${res.status}` }] };
+      return { content: [{ type: 'text', text: `Bridge unhealthy: status ${res.status}` }] };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      return { content: [{ type: "text", text: `Cannot reach bridge: ${msg}` }] };
+      return { content: [{ type: 'text', text: `Cannot reach bridge: ${msg}` }] };
     }
-  }
+  },
 );
 
 mcpServer.registerTool(
-  "list_models",
-  { description: "List available models from the active provider." },
+  'list_models',
+  { description: 'List available models from the active provider.' },
   async () => {
     try {
-      const res = await fetchJson(bridgeUrl("/v1/models"));
+      const res = await fetchJson(bridgeUrl('/v1/models'));
       if (res.status === 200) {
         const modelIds = res.body.data?.map((m: any) => m.id) ?? [];
-        return { content: [{ type: "text", text: `Available models: ${modelIds.join(", ")}` }] };
+        return { content: [{ type: 'text', text: `Available models: ${modelIds.join(', ')}` }] };
       }
-      return { content: [{ type: "text", text: `Failed to list models: ${JSON.stringify(res.body)}` }] };
+      return {
+        content: [{ type: 'text', text: `Failed to list models: ${JSON.stringify(res.body)}` }],
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      return { content: [{ type: "text", text: `Cannot reach bridge: ${msg}` }] };
+      return { content: [{ type: 'text', text: `Cannot reach bridge: ${msg}` }] };
     }
-  }
+  },
 );
 
 mcpServer.registerTool(
-  "generate_opencode_config",
+  'generate_opencode_config',
   {
-    description: "Generate an OpenCode provider fragment for the bridge.",
+    description: 'Generate an OpenCode provider fragment for the bridge.',
     inputSchema: {
-      providerId: z.string().optional().describe("Provider key (default: llm-bridge)."),
-      modelId: z.string().optional().describe("Model id (default: composer-2)."),
+      providerId: z.string().optional().describe('Provider key (default: llm-bridge).'),
+      modelId: z.string().optional().describe('Model id (default: composer-2).'),
     },
   },
   async ({ providerId, modelId }) => {
-    const pid = providerId ?? "llm-bridge";
-    const mid = modelId ?? "composer-2";
+    const pid = providerId ?? 'llm-bridge';
+    const mid = modelId ?? 'composer-2';
     const fragment = {
       provider: {
         [pid]: {
-          npm: "@ai-sdk/openai-compatible",
-          name: "LLM Bridge",
+          npm: '@ai-sdk/openai-compatible',
+          name: 'LLM Bridge',
           options: {
-            apiKey: "bridge-local",
-            baseURL: bridgeUrl("/v1"),
+            apiKey: 'bridge-local',
+            baseURL: bridgeUrl('/v1'),
           },
           models: { [mid]: { name: mid } },
         },
       },
     };
     return {
-      content: [{ type: "text", text: `Merge into opencode.json:\n\n${JSON.stringify(fragment, null, 2)}` }],
+      content: [
+        { type: 'text', text: `Merge into opencode.json:\n\n${JSON.stringify(fragment, null, 2)}` },
+      ],
     };
-  }
+  },
 );
 
 const transport = new StdioServerTransport();
@@ -1781,6 +1844,7 @@ git commit -m "feat(mcp): add MCP server with status, models, and config tools"
 ### Task 11: CLI - Init and Start Commands
 
 **Files:**
+
 - Create: `cli/package.json`, `cli/tsconfig.json`, `cli/src/index.ts`, `cli/src/commands/init.ts`, `cli/src/commands/start.ts`, `cli/src/utils/config.ts`
 
 - [ ] **Step 1: Create cli/package.json**
@@ -1828,7 +1892,7 @@ git commit -m "feat(mcp): add MCP server with status, models, and config tools"
 - [ ] **Step 3: Create cli/src/utils/config.ts**
 
 ```typescript
-import { loadConfig, saveConfig, BridgeConfig } from "@llm-bridge/core";
+import { loadConfig, saveConfig, BridgeConfig } from '@llm-bridge/core';
 
 export function readConfig(): BridgeConfig {
   return loadConfig();
@@ -1849,39 +1913,39 @@ export function setPluginConfig(pluginName: string, envVars: Record<string, stri
 - [ ] **Step 4: Create cli/src/commands/init.ts**
 
 ```typescript
-import { readConfig, writeConfig, setPluginConfig } from "../utils/config.js";
-import { CursorBridgePlugin } from "@llm-bridge/cursor";
-import { createInterface } from "node:readline";
+import { readConfig, writeConfig, setPluginConfig } from '../utils/config.js';
+import { CursorBridgePlugin } from '@llm-bridge/cursor';
+import { createInterface } from 'node:readline';
 
 export async function initCommand(): Promise<void> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q: string) => new Promise<string>((resolve) => rl.question(q, resolve));
 
-  console.log("llm-bridge setup wizard\n");
+  console.log('llm-bridge setup wizard\n');
 
   const config = readConfig();
 
-  const provider = await ask(`Provider (default: cursor): `) || "cursor";
+  const provider = (await ask(`Provider (default: cursor): `)) || 'cursor';
   config.activePlugin = provider;
 
-  if (provider === "cursor") {
-    const apiKey = await ask("Enter your CURSOR_API_KEY: ");
+  if (provider === 'cursor') {
+    const apiKey = await ask('Enter your CURSOR_API_KEY: ');
     if (!apiKey) {
-      console.error("API key is required.");
+      console.error('API key is required.');
       rl.close();
       process.exit(1);
     }
 
-    setPluginConfig("cursor", { CURSOR_API_KEY: apiKey });
+    setPluginConfig('cursor', { CURSOR_API_KEY: apiKey });
 
     const plugin = new CursorBridgePlugin();
     const valid = await plugin.authenticate({ CURSOR_API_KEY: apiKey });
     if (!valid) {
-      console.error("Invalid API key. Please check and try again.");
+      console.error('Invalid API key. Please check and try again.');
       rl.close();
       process.exit(1);
     }
-    console.log("API key validated successfully.");
+    console.log('API key validated successfully.');
   }
 
   const port = await ask(`Port (default: ${config.port}): `);
@@ -1896,17 +1960,17 @@ export async function initCommand(): Promise<void> {
 - [ ] **Step 5: Create cli/src/commands/start.ts**
 
 ```typescript
-import { BridgeServer, loadConfig, BridgeConfig } from "@llm-bridge/core";
-import { CursorBridgePlugin } from "@llm-bridge/cursor";
+import { BridgeServer, loadConfig, BridgeConfig } from '@llm-bridge/core';
+import { CursorBridgePlugin } from '@llm-bridge/cursor';
 
 export async function startCommand(): Promise<void> {
   const config = loadConfig();
   const server = new BridgeServer(config);
 
-  if (config.activePlugin === "cursor") {
+  if (config.activePlugin === 'cursor') {
     const plugin = new CursorBridgePlugin();
     server.registerPlugin(plugin);
-    server.setActivePlugin("cursor");
+    server.setActivePlugin('cursor');
     console.error(`[llm-bridge] active plugin: cursor`);
   } else {
     console.error(`[llm-bridge] warning: unknown plugin "${config.activePlugin}"`);
@@ -1914,14 +1978,14 @@ export async function startCommand(): Promise<void> {
 
   await server.start();
 
-  process.on("SIGINT", async () => {
-    console.error("\n[llm-bridge] shutting down...");
+  process.on('SIGINT', async () => {
+    console.error('\n[llm-bridge] shutting down...');
     await server.stop();
     process.exit(0);
   });
 
-  process.on("SIGTERM", async () => {
-    console.error("\n[llm-bridge] shutting down...");
+  process.on('SIGTERM', async () => {
+    console.error('\n[llm-bridge] shutting down...');
     await server.stop();
     process.exit(0);
   });
@@ -1931,20 +1995,20 @@ export async function startCommand(): Promise<void> {
 - [ ] **Step 6: Create cli/src/index.ts**
 
 ```typescript
-import { initCommand } from "./commands/init.js";
-import { startCommand } from "./commands/start.js";
+import { initCommand } from './commands/init.js';
+import { startCommand } from './commands/start.js';
 
-const command = process.argv[2] ?? "help";
+const command = process.argv[2] ?? 'help';
 
 async function main(): Promise<void> {
   switch (command) {
-    case "init":
+    case 'init':
       await initCommand();
       break;
-    case "start":
+    case 'start':
       await startCommand();
       break;
-    case "help":
+    case 'help':
     default:
       console.log(`llm-bridge v2.0.0
 
@@ -1973,22 +2037,23 @@ git commit -m "feat(cli): add init wizard and start command"
 ### Task 12: CLI - Configure OpenCode Command
 
 **Files:**
+
 - Create: `cli/src/commands/configure.ts`, `cli/src/utils/opencode.ts`
 - Test: `cli/test/configure.test.ts`
 
 - [ ] **Step 1: Create cli/src/utils/opencode.ts**
 
 ```typescript
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 export function findOpencodeConfig(): string | null {
   const candidates = [
-    path.join(os.homedir(), ".config", "opencode", "opencode.json"),
-    path.join(os.homedir(), ".config", "opencode", "opencode.jsonc"),
-    path.join(process.cwd(), "opencode.json"),
-    path.join(process.cwd(), "opencode.jsonc"),
+    path.join(os.homedir(), '.config', 'opencode', 'opencode.json'),
+    path.join(os.homedir(), '.config', 'opencode', 'opencode.jsonc'),
+    path.join(process.cwd(), 'opencode.json'),
+    path.join(process.cwd(), 'opencode.jsonc'),
   ];
   for (const p of candidates) {
     if (fs.existsSync(p)) return p;
@@ -1996,15 +2061,20 @@ export function findOpencodeConfig(): string | null {
   return null;
 }
 
-export function injectProvider(configPath: string, providerId: string, modelId: string, port: number): void {
-  const raw = fs.readFileSync(configPath, "utf8");
+export function injectProvider(
+  configPath: string,
+  providerId: string,
+  modelId: string,
+  port: number,
+): void {
+  const raw = fs.readFileSync(configPath, 'utf8');
   const config = JSON.parse(raw);
   if (!config.provider) config.provider = {};
   config.provider[providerId] = {
-    npm: "@ai-sdk/openai-compatible",
-    name: "LLM Bridge",
+    npm: '@ai-sdk/openai-compatible',
+    name: 'LLM Bridge',
     options: {
-      apiKey: "bridge-local",
+      apiKey: 'bridge-local',
       baseURL: `http://127.0.0.1:${port}/v1`,
     },
     models: { [modelId]: { name: modelId } },
@@ -2017,19 +2087,19 @@ export function injectProvider(configPath: string, providerId: string, modelId: 
 - [ ] **Step 2: Create cli/src/commands/configure.ts**
 
 ```typescript
-import { findOpencodeConfig, injectProvider } from "../utils/opencode.js";
-import { readConfig } from "../utils/config.js";
+import { findOpencodeConfig, injectProvider } from '../utils/opencode.js';
+import { readConfig } from '../utils/config.js';
 
 export async function configureOpencodeCommand(): Promise<void> {
   const configPath = findOpencodeConfig();
   if (!configPath) {
-    console.error("No opencode.json found. Create one at ~/.config/opencode/opencode.json");
+    console.error('No opencode.json found. Create one at ~/.config/opencode/opencode.json');
     process.exit(1);
   }
 
   const bridgeConfig = readConfig();
-  const providerId = "llm-bridge";
-  const modelId = "composer-2";
+  const providerId = 'llm-bridge';
+  const modelId = 'composer-2';
 
   injectProvider(configPath, providerId, modelId, bridgeConfig.port);
   console.log(`Injected provider into ${configPath}`);
@@ -2055,34 +2125,34 @@ case "configure":
 Create `cli/test/configure.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeEach } from "vitest";
-import { injectProvider } from "../src/utils/opencode.js";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { injectProvider } from '../src/utils/opencode.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
-describe("opencode utils", () => {
+describe('opencode utils', () => {
   let tmpFile: string;
 
   beforeEach(() => {
     tmpFile = path.join(os.tmpdir(), `opencode-test-${Date.now()}.json`);
-    fs.writeFileSync(tmpFile, "{}");
+    fs.writeFileSync(tmpFile, '{}');
   });
 
-  it("injects provider into empty config", () => {
-    injectProvider(tmpFile, "test-provider", "test-model", 3849);
-    const config = JSON.parse(fs.readFileSync(tmpFile, "utf8"));
-    expect(config.provider["test-provider"]).toBeDefined();
-    expect(config.provider["test-provider"].options.baseURL).toBe("http://127.0.0.1:3849/v1");
-    expect(config.model).toBe("test-provider/test-model");
+  it('injects provider into empty config', () => {
+    injectProvider(tmpFile, 'test-provider', 'test-model', 3849);
+    const config = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
+    expect(config.provider['test-provider']).toBeDefined();
+    expect(config.provider['test-provider'].options.baseURL).toBe('http://127.0.0.1:3849/v1');
+    expect(config.model).toBe('test-provider/test-model');
   });
 
-  it("preserves existing config fields", () => {
-    fs.writeFileSync(tmpFile, JSON.stringify({ existing: "value" }));
-    injectProvider(tmpFile, "test-provider", "test-model", 3849);
-    const config = JSON.parse(fs.readFileSync(tmpFile, "utf8"));
-    expect(config.existing).toBe("value");
-    expect(config.provider["test-provider"]).toBeDefined();
+  it('preserves existing config fields', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ existing: 'value' }));
+    injectProvider(tmpFile, 'test-provider', 'test-model', 3849);
+    const config = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
+    expect(config.existing).toBe('value');
+    expect(config.provider['test-provider']).toBeDefined();
   });
 });
 ```
@@ -2092,6 +2162,7 @@ describe("opencode utils", () => {
 ```bash
 cd cli && npx vitest run
 ```
+
 Expected: PASS
 
 - [ ] **Step 6: Commit**
@@ -2106,18 +2177,19 @@ git commit -m "feat(cli): add configure opencode command with in-place injection
 ### Task 13: CLI - Doctor and Daemon Commands
 
 **Files:**
+
 - Create: `cli/src/commands/doctor.ts`, `cli/src/commands/daemon.ts`
 
 - [ ] **Step 1: Create cli/src/commands/doctor.ts**
 
 ```typescript
-import http from "node:http";
-import { readConfig } from "../utils/config.js";
-import fs from "node:fs";
-import { configPath } from "@llm-bridge/core";
+import http from 'node:http';
+import { readConfig } from '../utils/config.js';
+import fs from 'node:fs';
+import { configPath } from '@llm-bridge/core';
 
 export async function doctorCommand(): Promise<void> {
-  console.log("llm-bridge diagnostics\n");
+  console.log('llm-bridge diagnostics\n');
 
   const config = readConfig();
   console.log(`Config: ${configPath()}`);
@@ -2128,9 +2200,9 @@ export async function doctorCommand(): Promise<void> {
 
   // Check config file
   if (fs.existsSync(configPath())) {
-    console.log("✓ Config file exists");
+    console.log('✓ Config file exists');
   } else {
-    console.log("✗ Config file not found (using defaults)");
+    console.log('✗ Config file not found (using defaults)');
   }
 
   // Check plugin config
@@ -2144,17 +2216,19 @@ export async function doctorCommand(): Promise<void> {
   // Check bridge connectivity
   try {
     const res = await new Promise<{ status: number }>((resolve, reject) => {
-      http.get(`http://${config.host}:${config.port}/health`, (res) => {
-        resolve({ status: res.statusCode ?? 0 });
-      }).on("error", reject);
+      http
+        .get(`http://${config.host}:${config.port}/health`, (res) => {
+          resolve({ status: res.statusCode ?? 0 });
+        })
+        .on('error', reject);
     });
     if (res.status === 200) {
-      console.log("✓ Bridge server is running");
+      console.log('✓ Bridge server is running');
     } else {
       console.log(`✗ Bridge server returned status ${res.status}`);
     }
   } catch {
-    console.log("✗ Cannot reach bridge server (is it running?)");
+    console.log('✗ Cannot reach bridge server (is it running?)');
   }
 
   // Check port conflicts
@@ -2165,9 +2239,9 @@ export async function doctorCommand(): Promise<void> {
         server.close();
         resolve();
       });
-      server.on("error", (err: any) => {
-        if (err.code === "EADDRINUSE") {
-          reject(new Error("Port in use"));
+      server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          reject(new Error('Port in use'));
         } else {
           resolve();
         }
@@ -2183,21 +2257,21 @@ export async function doctorCommand(): Promise<void> {
 - [ ] **Step 2: Create cli/src/commands/daemon.ts**
 
 ```typescript
-import fs from "node:fs";
-import path from "node:path";
-import os from "node:os";
-import { execSync } from "node:child_process";
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import { execSync } from 'node:child_process';
 
-const LABEL = "com.llm-bridge.daemon";
+const LABEL = 'com.llm-bridge.daemon';
 
 export async function installDaemonCommand(): Promise<void> {
-  if (process.platform !== "darwin") {
-    console.error("Daemon installation is only supported on macOS.");
+  if (process.platform !== 'darwin') {
+    console.error('Daemon installation is only supported on macOS.');
     process.exit(1);
   }
 
-  const plistPath = path.join(os.homedir(), "Library", "LaunchAgents", `${LABEL}.plist`);
-  const wrapperPath = path.join(__dirname, "..", "..", "scripts", "llm-bridge-daemon.sh");
+  const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
+  const wrapperPath = path.join(__dirname, '..', '..', 'scripts', 'llm-bridge-daemon.sh');
 
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -2226,25 +2300,27 @@ export async function installDaemonCommand(): Promise<void> {
   fs.writeFileSync(plistPath, plist);
 
   try {
-    execSync(`launchctl bootstrap "gui/$(id -u)" "${plistPath}"`, { stdio: "inherit" });
+    execSync(`launchctl bootstrap "gui/$(id -u)" "${plistPath}"`, { stdio: 'inherit' });
     console.log(`Installed LaunchAgent: ${plistPath}`);
     console.log(`Logs: ~/Library/Logs/llm-bridge.{log,err.log}`);
   } catch (e) {
-    console.error("Failed to bootstrap daemon:", e);
+    console.error('Failed to bootstrap daemon:', e);
     process.exit(1);
   }
 }
 
 export async function uninstallDaemonCommand(): Promise<void> {
-  if (process.platform !== "darwin") {
-    console.error("Daemon uninstallation is only supported on macOS.");
+  if (process.platform !== 'darwin') {
+    console.error('Daemon uninstallation is only supported on macOS.');
     process.exit(1);
   }
 
-  const plistPath = path.join(os.homedir(), "Library", "LaunchAgents", `${LABEL}.plist`);
+  const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
 
   try {
-    execSync(`launchctl bootout "gui/$(id -u)" "${plistPath}" 2>/dev/null || true`, { stdio: "inherit" });
+    execSync(`launchctl bootout "gui/$(id -u)" "${plistPath}" 2>/dev/null || true`, {
+      stdio: 'inherit',
+    });
   } catch {
     // Ignore errors during unbootstrap
   }
@@ -2253,7 +2329,7 @@ export async function uninstallDaemonCommand(): Promise<void> {
     fs.unlinkSync(plistPath);
     console.log(`Removed LaunchAgent: ${plistPath}`);
   } else {
-    console.log("No LaunchAgent found.");
+    console.log('No LaunchAgent found.');
   }
 }
 ```
@@ -2309,11 +2385,12 @@ git commit -m "feat(cli): add doctor diagnostics and daemon install commands"
 ### Task 14: Documentation, CI, and Release
 
 **Files:**
+
 - Create: `README.md`, `CONTRIBUTING.md`, `ROADMAP.md`, `LICENSE`, `.github/workflows/ci.yml`, `docs/plugin-development.md`, `docs/architecture.md`, `docs/troubleshooting.md`, `examples/opencode.json`, `examples/docker-compose.yml`, `scripts/build-binary.sh`
 
 - [ ] **Step 1: Create README.md**
 
-```markdown
+````markdown
 # llm-bridge
 
 **Use any AI IDE's model catalog from any OpenAI-compatible client.**
@@ -2337,6 +2414,7 @@ llm-bridge start
 # Configure OpenCode (one-shot)
 llm-bridge configure opencode
 ```
+````
 
 That's it. OpenCode now uses Cursor's models through the bridge.
 
@@ -2349,11 +2427,11 @@ That's it. OpenCode now uses Cursor's models through the bridge.
 
 ## Supported Providers
 
-| Provider | Package | Status |
-|----------|---------|--------|
-| Cursor | `@llm-bridge/cursor` | ✅ Built-in |
-| GitHub Copilot | `@llm-bridge/copilot` | 🚧 Planned |
-| Windsurf | `@llm-bridge/windsurf` | 🚧 Planned |
+| Provider       | Package                | Status      |
+| -------------- | ---------------------- | ----------- |
+| Cursor         | `@llm-bridge/cursor`   | ✅ Built-in |
+| GitHub Copilot | `@llm-bridge/copilot`  | 🚧 Planned  |
+| Windsurf       | `@llm-bridge/windsurf` | 🚧 Planned  |
 
 ## Architecture
 
@@ -2370,7 +2448,8 @@ Want to add a new provider? See [docs/plugin-development.md](docs/plugin-develop
 ## License
 
 MIT
-```
+
+````
 
 - [ ] **Step 2: Create CONTRIBUTING.md**
 
@@ -2394,7 +2473,7 @@ interface BridgePlugin {
   listModels(config: Record<string, string>): Promise<ModelInfo[]>;
   createSession(config: Record<string, string>, model: string): Promise<BridgeSession>;
 }
-```
+````
 
 ## Development Setup
 
@@ -2409,7 +2488,8 @@ pnpm test
 - One provider per PR
 - Include tests
 - Update README supported providers table
-```
+
+````
 
 - [ ] **Step 3: Create ROADMAP.md**
 
@@ -2438,7 +2518,7 @@ pnpm test
 - [ ] Plugin marketplace
 - [ ] Enterprise features (proxy, audit logging, rate limiting)
 - [ ] Multi-language SDK (Python, Go)
-```
+````
 
 - [ ] **Step 4: Create LICENSE**
 
@@ -2493,7 +2573,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - run: pnpm install
       - run: pnpm build
@@ -2503,7 +2583,7 @@ jobs:
 
 - [ ] **Step 6: Create docs/plugin-development.md**
 
-```markdown
+````markdown
 # Plugin Development Guide
 
 ## Overview
@@ -2513,11 +2593,18 @@ Plugins are npm packages that implement the `BridgePlugin` interface.
 ## Interface
 
 ```typescript
-import type { BridgePlugin, BridgeSession, ModelInfo, Message, ToolDefinition, StreamChunk } from "@llm-bridge/core";
+import type {
+  BridgePlugin,
+  BridgeSession,
+  ModelInfo,
+  Message,
+  ToolDefinition,
+  StreamChunk,
+} from '@llm-bridge/core';
 
 class MyPlugin implements BridgePlugin {
-  name = "my-provider";
-  version = "1.0.0";
+  name = 'my-provider';
+  version = '1.0.0';
 
   async authenticate(config: Record<string, string>): Promise<boolean> {
     // Validate API key, return true if valid
@@ -2532,11 +2619,13 @@ class MyPlugin implements BridgePlugin {
   }
 }
 ```
+````
 
 ## Publishing
 
 Publish to npm with `@llm-bridge/` scope for discoverability.
-```
+
+````
 
 - [ ] **Step 7: Create examples/opencode.json**
 
@@ -2558,17 +2647,17 @@ Publish to npm with `@llm-bridge/` scope for discoverability.
   },
   "model": "llm-bridge/composer-2"
 }
-```
+````
 
 - [ ] **Step 8: Create examples/docker-compose.yml**
 
 ```yaml
-version: "3.8"
+version: '3.8'
 services:
   llm-bridge:
     build: .
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - CURSOR_API_KEY=${CURSOR_API_KEY}
       - LLM_BRIDGE_PORT=3849
@@ -2599,6 +2688,7 @@ git commit -m "docs: add README, contributing guide, roadmap, CI, and examples"
 ### Task 15: Integration Test — Full E2E Flow
 
 **Files:**
+
 - Create: `packages/core/test/integration.test.ts`
 
 - [ ] **Step 1: Write integration test**
@@ -2606,20 +2696,24 @@ git commit -m "docs: add README, contributing guide, roadmap, CI, and examples"
 Create `packages/core/test/integration.test.ts`:
 
 ```typescript
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { BridgeServer } from "../src/server.js";
-import type { BridgePlugin, BridgeSession, ModelInfo, StreamChunk } from "../src/types.js";
-import http from "node:http";
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { BridgeServer } from '../src/server.js';
+import type { BridgePlugin, BridgeSession, ModelInfo, StreamChunk } from '../src/types.js';
+import http from 'node:http';
 
 // Mock plugin for testing
 class MockPlugin implements BridgePlugin {
-  name = "mock";
-  version = "1.0.0";
+  name = 'mock';
+  version = '1.0.0';
 
-  async authenticate(): Promise<boolean> { return true; }
+  async authenticate(): Promise<boolean> {
+    return true;
+  }
 
   async listModels(): Promise<ModelInfo[]> {
-    return [{ id: "mock-model", name: "Mock Model", capabilities: { streaming: true, tools: true } }];
+    return [
+      { id: 'mock-model', name: 'Mock Model', capabilities: { streaming: true, tools: true } },
+    ];
   }
 
   async createSession(): Promise<BridgeSession> {
@@ -2629,44 +2723,51 @@ class MockPlugin implements BridgePlugin {
 
 class MockSession implements BridgeSession {
   async *send(): AsyncIterable<StreamChunk> {
-    yield { type: "text", content: "Hello from mock" };
-    yield { type: "done", finishReason: "stop" };
+    yield { type: 'text', content: 'Hello from mock' };
+    yield { type: 'done', finishReason: 'stop' };
   }
 
   async dispose(): Promise<void> {}
 }
 
-function fetchJson(url: string, options?: { method?: string; body?: string; headers?: Record<string, string> }): Promise<any> {
+function fetchJson(
+  url: string,
+  options?: { method?: string; body?: string; headers?: Record<string, string> },
+): Promise<any> {
   return new Promise((resolve, reject) => {
     const urlObj = new URL(url);
-    const req = http.request(url, {
-      method: options?.method ?? "GET",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-    }, (res) => {
-      let data = "";
-      res.on("data", (chunk) => (data += chunk));
-      res.on("end", () => {
-        try {
-          resolve({ status: res.statusCode, body: JSON.parse(data) });
-        } catch {
-          resolve({ status: res.statusCode, body: data });
-        }
-      });
-    });
-    req.on("error", reject);
+    const req = http.request(
+      url,
+      {
+        method: options?.method ?? 'GET',
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          try {
+            resolve({ status: res.statusCode, body: JSON.parse(data) });
+          } catch {
+            resolve({ status: res.statusCode, body: data });
+          }
+        });
+      },
+    );
+    req.on('error', reject);
     if (options?.body) req.write(options.body);
     req.end();
   });
 }
 
-describe("E2E integration test", () => {
+describe('E2E integration test', () => {
   let server: BridgeServer;
   let baseUrl: string;
 
   beforeAll(async () => {
-    server = new BridgeServer({ port: 0, host: "127.0.0.1" });
+    server = new BridgeServer({ port: 0, host: '127.0.0.1' });
     server.registerPlugin(new MockPlugin());
-    server.setActivePlugin("mock");
+    server.setActivePlugin('mock');
     await server.start();
     const address = server.address();
     baseUrl = `http://127.0.0.1:${(address as any).port}`;
@@ -2676,56 +2777,62 @@ describe("E2E integration test", () => {
     await server.stop();
   });
 
-  it("health endpoint returns ok", async () => {
+  it('health endpoint returns ok', async () => {
     const res = await fetchJson(`${baseUrl}/health`);
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);
   });
 
-  it("lists models from active plugin", async () => {
+  it('lists models from active plugin', async () => {
     const res = await fetchJson(`${baseUrl}/v1/models`);
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].id).toBe("mock-model");
+    expect(res.body.data[0].id).toBe('mock-model');
   });
 
-  it("completes chat request (non-streaming)", async () => {
+  it('completes chat request (non-streaming)', async () => {
     const res = await fetchJson(`${baseUrl}/v1/chat/completions`, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({
-        model: "mock-model",
-        messages: [{ role: "user", content: "Hello" }],
+        model: 'mock-model',
+        messages: [{ role: 'user', content: 'Hello' }],
         stream: false,
       }),
     });
     expect(res.status).toBe(200);
-    expect(res.body.choices[0].message.content).toBe("Hello from mock");
-    expect(res.body.choices[0].finish_reason).toBe("stop");
+    expect(res.body.choices[0].message.content).toBe('Hello from mock');
+    expect(res.body.choices[0].finish_reason).toBe('stop');
   });
 
-  it("completes chat request (streaming)", async () => {
+  it('completes chat request (streaming)', async () => {
     const res = await new Promise<string>((resolve, reject) => {
       const urlObj = new URL(`${baseUrl}/v1/chat/completions`);
-      const req = http.request(urlObj, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      }, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data));
-      });
-      req.on("error", reject);
-      req.write(JSON.stringify({
-        model: "mock-model",
-        messages: [{ role: "user", content: "Hello" }],
-        stream: true,
-      }));
+      const req = http.request(
+        urlObj,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        },
+        (res) => {
+          let data = '';
+          res.on('data', (chunk) => (data += chunk));
+          res.on('end', () => resolve(data));
+        },
+      );
+      req.on('error', reject);
+      req.write(
+        JSON.stringify({
+          model: 'mock-model',
+          messages: [{ role: 'user', content: 'Hello' }],
+          stream: true,
+        }),
+      );
       req.end();
     });
 
-    expect(res).toContain("data:");
-    expect(res).toContain("Hello from mock");
-    expect(res).toContain("[DONE]");
+    expect(res).toContain('data:');
+    expect(res).toContain('Hello from mock');
+    expect(res).toContain('[DONE]');
   });
 });
 ```
@@ -2735,6 +2842,7 @@ describe("E2E integration test", () => {
 ```bash
 cd packages/core && npx vitest run test/integration.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 3: Commit**
@@ -2750,38 +2858,40 @@ git commit -m "test(core): add E2E integration test with mock plugin"
 
 ### Spec Coverage Check
 
-| Spec Requirement | Task |
-|-----------------|------|
-| Monorepo structure | Task 1 |
-| Plugin interface | Task 2 |
-| HTTP server with /health, /v1/models, /v1/chat/completions | Task 3 |
-| Session manager with TTL | Task 4 |
-| OpenAI request parsing | Task 5 |
-| OpenAI SSE response formatting | Task 6 |
-| Plugin registry with health tracking | Task 7 |
-| Config loader (file + env) | Task 8 |
-| Cursor plugin (auth, models, session, tools) | Task 9 |
-| MCP server for Cursor IDE | Task 10 |
-| CLI init wizard | Task 11 |
-| CLI start command | Task 11 |
-| CLI configure opencode (in-place) | Task 12 |
-| CLI doctor command | Task 13 |
-| CLI daemon install (macOS LaunchAgent) | Task 13 |
-| Error handling (auth, provider, plugin crash, session timeout, tool failure) | Tasks 3, 7, 9 |
-| Streaming resilience (heartbeat, graceful shutdown) | Task 3 (server.ts) |
-| Testing (unit, integration, E2E) | Tasks 2-15 |
-| CI pipeline | Task 14 |
-| Documentation (README, contributing, plugin dev guide) | Task 14 |
-| npm publish packages | Task 14 (ROADMAP item, publish step needed) |
-| Community growth (issue templates, labels, roadmap) | Task 14 |
+| Spec Requirement                                                             | Task                                        |
+| ---------------------------------------------------------------------------- | ------------------------------------------- |
+| Monorepo structure                                                           | Task 1                                      |
+| Plugin interface                                                             | Task 2                                      |
+| HTTP server with /health, /v1/models, /v1/chat/completions                   | Task 3                                      |
+| Session manager with TTL                                                     | Task 4                                      |
+| OpenAI request parsing                                                       | Task 5                                      |
+| OpenAI SSE response formatting                                               | Task 6                                      |
+| Plugin registry with health tracking                                         | Task 7                                      |
+| Config loader (file + env)                                                   | Task 8                                      |
+| Cursor plugin (auth, models, session, tools)                                 | Task 9                                      |
+| MCP server for Cursor IDE                                                    | Task 10                                     |
+| CLI init wizard                                                              | Task 11                                     |
+| CLI start command                                                            | Task 11                                     |
+| CLI configure opencode (in-place)                                            | Task 12                                     |
+| CLI doctor command                                                           | Task 13                                     |
+| CLI daemon install (macOS LaunchAgent)                                       | Task 13                                     |
+| Error handling (auth, provider, plugin crash, session timeout, tool failure) | Tasks 3, 7, 9                               |
+| Streaming resilience (heartbeat, graceful shutdown)                          | Task 3 (server.ts)                          |
+| Testing (unit, integration, E2E)                                             | Tasks 2-15                                  |
+| CI pipeline                                                                  | Task 14                                     |
+| Documentation (README, contributing, plugin dev guide)                       | Task 14                                     |
+| npm publish packages                                                         | Task 14 (ROADMAP item, publish step needed) |
+| Community growth (issue templates, labels, roadmap)                          | Task 14                                     |
 
 ### Placeholder Scan
+
 - No "TBD", "TODO", or incomplete sections
 - All code steps contain actual code
 - All test steps contain actual test code
 - No "similar to Task N" references
 
 ### Type Consistency
+
 - `BridgePlugin`, `BridgeSession`, `StreamChunk`, `ModelInfo`, `Message`, `ToolDefinition` defined in Task 2, used consistently throughout
 - `BridgeConfig`, `DefaultConfig` defined in Task 2, used in Tasks 3, 8, 11, 12
 - All imports use `.js` extension for ESM compatibility

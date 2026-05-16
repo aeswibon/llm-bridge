@@ -87,6 +87,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 ### @llm-bridge/core
 
 **Responsibilities:**
+
 - HTTP server using Node.js native `http` module (no Express)
 - Routes: `GET /health`, `GET /v1/models`, `POST /v1/chat/completions`
 - Request parser: OpenAI wire format → internal `Message[]` + `ToolDefinition[]`
@@ -96,6 +97,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 - Config loader: `~/.config/llm-bridge/config.json` or env vars (`LLM_BRIDGE_*`)
 
 **Key design decisions:**
+
 - No external HTTP framework — keep dependency tree minimal, faster startup
 - Sessions keyed by optional `X-Session-ID` header; auto-generated if absent
 - Plugin crashes are isolated — one bad plugin doesn't bring down the server
@@ -103,6 +105,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 ### @llm-bridge/cursor
 
 **Responsibilities:**
+
 - Implements `BridgePlugin` using `@cursor/sdk`
 - Auth: `Cursor.me({ apiKey })` validates `CURSOR_API_KEY`
 - Models: `Cursor.models.list({ apiKey })` → normalized `ModelInfo[]`
@@ -111,6 +114,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 - Multi-turn: maintains context within session via Cursor SDK's native `Agent` state
 
 **Migration from current code:**
+
 - Extract `bridge.ts` logic into plugin's `createSession()` and `send()`
 - Replace single-prompt folding with proper multi-turn session management
 - Add tool call translation layer (currently logged and ignored)
@@ -118,6 +122,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 ### @llm-bridge/mcp
 
 **Responsibilities:**
+
 - Stdio MCP server registered in Cursor IDE
 - Tools:
   - `bridge_status` — health check, active plugin, server uptime
@@ -129,6 +134,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 ### llm-bridge CLI
 
 **Commands:**
+
 - `llm-bridge init` — Interactive wizard: select provider, enter API key, test connection, write config
 - `llm-bridge start` — Launch bridge server (foreground)
 - `llm-bridge install <plugin>` — Install community plugin from npm
@@ -138,22 +144,24 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 - `llm-bridge uninstall-daemon` — Remove system service
 
 **Distribution:**
+
 - Standalone binary compiled with `pkg` or `nexe`
 - npm install also available for Node.js environments
 - Pre-built binaries for macOS (arm64, x64), Linux (x64)
 
 ## Error Handling
 
-| Scenario | Response | Action |
-|----------|----------|--------|
-| Missing/invalid auth | `401 { error: { type: "authentication_error" } }` | Log, return immediately |
-| Provider API error | `502 { error: { type: "provider_error" } }` | Log with full error, return mapped message |
-| Plugin crash | `500 { error: { type: "plugin_error" } }` | Catch, log, mark plugin unhealthy, return |
-| Session timeout (30min) | New session created on next request | Auto-dispose old session |
-| Tool call rejected | Warning logged, text-only fallback | Configurable: strict vs lenient mode |
-| Upstream stream dies | Synthetic `finish_reason: "error"` chunk | Close SSE stream cleanly |
+| Scenario                | Response                                          | Action                                     |
+| ----------------------- | ------------------------------------------------- | ------------------------------------------ |
+| Missing/invalid auth    | `401 { error: { type: "authentication_error" } }` | Log, return immediately                    |
+| Provider API error      | `502 { error: { type: "provider_error" } }`       | Log with full error, return mapped message |
+| Plugin crash            | `500 { error: { type: "plugin_error" } }`         | Catch, log, mark plugin unhealthy, return  |
+| Session timeout (30min) | New session created on next request               | Auto-dispose old session                   |
+| Tool call rejected      | Warning logged, text-only fallback                | Configurable: strict vs lenient mode       |
+| Upstream stream dies    | Synthetic `finish_reason: "error"` chunk          | Close SSE stream cleanly                   |
 
 **Streaming resilience:**
+
 - 30-second heartbeat ping via SSE comment (`: ping`)
 - Connection keep-alive headers on all responses
 - Graceful shutdown: finish in-flight requests before closing
@@ -181,14 +189,15 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 
 ## Testing Strategy
 
-| Layer | Scope | Tools |
-|-------|-------|-------|
-| Unit | Request parsing, SSE formatting, session lifecycle, plugin registry | Vitest |
-| Integration | Mock `@cursor/sdk`, test auth, tool forwarding, multi-turn | Vitest + mock servers |
-| E2E | Full bridge + mock provider → validate SSE output | Playwright / custom test harness |
-| CLI | Config read/write, daemon install, doctor diagnostics | Vitest + temp directories |
+| Layer       | Scope                                                               | Tools                            |
+| ----------- | ------------------------------------------------------------------- | -------------------------------- |
+| Unit        | Request parsing, SSE formatting, session lifecycle, plugin registry | Vitest                           |
+| Integration | Mock `@cursor/sdk`, test auth, tool forwarding, multi-turn          | Vitest + mock servers            |
+| E2E         | Full bridge + mock provider → validate SSE output                   | Playwright / custom test harness |
+| CLI         | Config read/write, daemon install, doctor diagnostics               | Vitest + temp directories        |
 
 **CI (GitHub Actions):**
+
 - Lint (biome or eslint), typecheck, test
 - Node 18/20/22 matrix
 - macOS + Linux runners
@@ -197,6 +206,7 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 ## Community Growth Strategy
 
 ### Phase 1 (This Release)
+
 - Restructure to monorepo, Cursor as reference plugin
 - README: 3-line setup, animated GIF, clear value proposition
 - docs/: Plugin dev guide, architecture, troubleshooting
@@ -206,12 +216,14 @@ OpenCode → POST /v1/chat/completions → Core HTTP Server
 - Landing page: VitePress docs site at `llm-bridge.dev`
 
 ### Phase 2 (Community-Driven)
+
 - Copilot, Windsurf plugins (community or core team)
 - OAuth support for providers that require it
 - Linux systemd daemon, Windows service wrapper
 - Plugin registry website (discoverable community plugins)
 
 ### Phase 3 (Ecosystem)
+
 - Plugin marketplace with ratings, downloads, compatibility badges
 - Enterprise features: proxy support, audit logging, rate limiting
 - SDK for building custom plugins in other languages (Python, Go)

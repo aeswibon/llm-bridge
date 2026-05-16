@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Phase 1 — Current
+
 - [x] Monorepo structure
 - [x] Core HTTP server
 - [x] Cursor plugin (reference implementation)
@@ -11,6 +12,7 @@
 - [ ] Landing page
 
 ## Phase 2 — Community
+
 - [ ] Copilot plugin
 - [ ] Windsurf plugin
 - [ ] OAuth support
@@ -19,6 +21,7 @@
 - [ ] Plugin registry website
 
 ## Phase 3 — Ecosystem
+
 - [ ] Plugin marketplace
 - [ ] Enterprise features (proxy, audit logging, rate limiting)
 - [ ] Multi-language SDK (Python, Go)
