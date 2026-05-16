@@ -42,18 +42,16 @@ describe('CopilotBridgeSession', () => {
 
   it('yields text and done chunks on success', async () => {
     const encoder = new TextEncoder();
-    const sseData1 = [
+    const sseData = [
       'data: {"choices":[{"delta":{"content":"Hello"},"finish_reason":null}]}',
       'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}',
-      '',
+      'data: [DONE]',
     ].join('\n');
-    const sseData2 = 'data: [DONE]\n';
 
     const mockReader = {
       read: vi
         .fn()
-        .mockResolvedValueOnce({ done: false, value: encoder.encode(sseData1) })
-        .mockResolvedValueOnce({ done: false, value: encoder.encode(sseData2) })
+        .mockResolvedValueOnce({ done: false, value: encoder.encode(sseData) })
         .mockResolvedValueOnce({ done: true, value: undefined }),
     };
 
@@ -69,10 +67,9 @@ describe('CopilotBridgeSession', () => {
       chunks.push(chunk);
     }
 
-    expect(chunks).toHaveLength(3);
+    expect(chunks).toHaveLength(2);
     expect(chunks[0]).toEqual({ type: 'text', content: 'Hello' });
     expect(chunks[1]).toEqual({ type: 'done', finishReason: 'stop' });
-    expect(chunks[2]).toEqual({ type: 'done', finishReason: 'stop' });
   });
 
   it('yields error chunk on network failure', async () => {

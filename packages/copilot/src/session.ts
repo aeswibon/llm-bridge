@@ -54,6 +54,7 @@ export class CopilotBridgeSession implements BridgeSession {
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let finished = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -69,7 +70,9 @@ export class CopilotBridgeSession implements BridgeSession {
 
           const data = trimmed.slice(5).trim();
           if (data === '[DONE]') {
-            yield { type: 'done', finishReason: 'stop' };
+            if (!finished) {
+              yield { type: 'done', finishReason: 'stop' };
+            }
             return;
           }
 
@@ -108,6 +111,7 @@ export class CopilotBridgeSession implements BridgeSession {
                 type: 'done',
                 finishReason,
               };
+              finished = true;
             }
           } catch {
             // Skip malformed SSE data
