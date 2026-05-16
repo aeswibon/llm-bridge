@@ -76,7 +76,7 @@ export class OAuthFlow {
       refreshToken: data.refresh_token as string | undefined,
       expiresAt: data.expires_in
         ? Date.now() + (data.expires_in as number) * 1000
-        : DEFAULT_TOKEN_EXPIRY_MS,
+        : Date.now() + DEFAULT_TOKEN_EXPIRY_MS,
       scopes: this.config.provider.scopes,
     };
 
