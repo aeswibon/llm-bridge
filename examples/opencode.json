@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "llm-bridge": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LLM Bridge",
+      "options": {
+        "apiKey": "bridge-local",
+        "baseURL": "http://127.0.0.1:3849/v1"
+      },
+      "models": {
+        "composer-2": { "name": "Composer 2" }
+      }
+    }
+  },
+  "model": "llm-bridge/composer-2"
+}
