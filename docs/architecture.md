@@ -79,10 +79,10 @@ Stdio MCP server for Cursor IDE integration:
 
 ## Error Handling
 
-| Scenario | Response |
-|----------|----------|
-| Missing auth | `401 authentication_error` |
-| Provider API error | `502 provider_error` |
-| Plugin crash | `500 plugin_error`, marked unhealthy |
-| Session timeout (30min) | Auto-dispose, new session on next request |
-| Tool call rejected | Warning logged, text-only fallback (lenient mode) |
+| Scenario                | Response                                          |
+| ----------------------- | ------------------------------------------------- |
+| Missing auth            | `401 authentication_error`                        |
+| Provider API error      | `502 provider_error`                              |
+| Plugin crash            | `500 plugin_error`, marked unhealthy              |
+| Session timeout (30min) | Auto-dispose, new session on next request         |
+| Tool call rejected      | Warning logged, text-only fallback (lenient mode) |

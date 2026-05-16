@@ -29,7 +29,7 @@ body:
       label: Will you implement this?
       options:
         - "Yes, I'll submit a PR"
-        - "No, requesting for community"
-        - "Maybe, need guidance"
+        - 'No, requesting for community'
+        - 'Maybe, need guidance'
     validations:
       required: true

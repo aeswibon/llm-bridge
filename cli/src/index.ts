@@ -1,33 +1,33 @@
 #!/usr/bin/env node
-import { initCommand } from "./commands/init.js";
-import { startCommand } from "./commands/start.js";
-import { configureOpencodeCommand } from "./commands/configure.js";
-import { doctorCommand } from "./commands/doctor.js";
-import { installDaemonCommand, uninstallDaemonCommand } from "./commands/daemon.js";
+import { initCommand } from './commands/init.js';
+import { startCommand } from './commands/start.js';
+import { configureOpencodeCommand } from './commands/configure.js';
+import { doctorCommand } from './commands/doctor.js';
+import { installDaemonCommand, uninstallDaemonCommand } from './commands/daemon.js';
 
-const command = process.argv[2] ?? "help";
+const command = process.argv[2] ?? 'help';
 
 async function main(): Promise<void> {
   switch (command) {
-    case "init":
+    case 'init':
       await initCommand();
       break;
-    case "start":
+    case 'start':
       await startCommand();
       break;
-    case "configure":
+    case 'configure':
       await configureOpencodeCommand();
       break;
-    case "doctor":
+    case 'doctor':
       await doctorCommand();
       break;
-    case "install-daemon":
+    case 'install-daemon':
       await installDaemonCommand();
       break;
-    case "uninstall-daemon":
+    case 'uninstall-daemon':
       await uninstallDaemonCommand();
       break;
-    case "help":
+    case 'help':
     default:
       console.log(`llm-bridge v2.0.0
 

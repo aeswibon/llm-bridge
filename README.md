@@ -9,7 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/anomalyco/llm-bridge/actions/workflows/ci.yml"><img src="https://github.com/anomalyco/llm-bridge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/aeswibon/llm-bridge/actions/workflows/pr-build.yml"><img src="https://github.com/aeswibon/llm-bridge/actions/workflows/pr-build.yml/badge.svg" alt="PR Build"></a>
+  <a href="https://github.com/aeswibon/llm-bridge/actions/workflows/release.yml"><img src="https://github.com/aeswibon/llm-bridge/actions/workflows/release.yml/badge.svg" alt="Release"></a>
+  <a href="https://www.npmjs.com/package/llm-bridge"><img src="https://img.shields.io/npm/v/llm-bridge?label=npm" alt="npm"></a>
+  <a href="https://github.com/aeswibon/llm-bridge/pkgs/container/llm-bridge"><img src="https://img.shields.io/badge/docker-ghcr.io-blue" alt="Docker"></a>
+  <a href="https://github.com/aeswibon/llm-bridge/releases/latest"><img src="https://img.shields.io/github/v/release/aeswibon/llm-bridge?label=release" alt="GitHub Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-18%2B-green" alt="Node.js 18+"></a>
 </p>
@@ -29,40 +33,70 @@ Your Client ──POST /v1/chat/completions──► llm-bridge ──► Provid
 
 ## Quick Start
 
+### npm
+
 ```bash
-# Install
 npm install -g llm-bridge
+llm-bridge init      # Interactive setup wizard
+llm-bridge start     # Launch the bridge server
+llm-bridge configure # Inject provider config into OpenCode
+```
 
-# Setup (interactive wizard)
+### Docker
+
+```bash
+docker run -d \
+  --name llm-bridge \
+  -p 3849:3849 \
+  -e CURSOR_API_KEY=cursor_your_key \
+  ghcr.io/aeswibon/llm-bridge:latest
+```
+
+### Homebrew (macOS)
+
+```bash
+brew tap aeswibon/llm-bridge-homebrew
+brew install llm-bridge
 llm-bridge init
-
-# Start the bridge server
 llm-bridge start
+```
 
-# Configure OpenCode (one-shot injection)
-llm-bridge configure
+### Binary (macOS / Linux)
+
+Download from [GitHub Releases](https://github.com/aeswibon/llm-bridge/releases/latest):
+
+```bash
+# macOS Apple Silicon
+curl -sL https://github.com/aeswibon/llm-bridge/releases/latest/download/llm-bridge-macos-arm64 -o llm-bridge
+chmod +x llm-bridge
+./llm-bridge init
+./llm-bridge start
 ```
 
 That's it. Your client now has access to Cursor's model catalog.
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **Zero-config** | One command to install, configure, and connect |
-| **Full feature parity** | Tool calls, multi-turn conversations, streaming |
-| **Plugin architecture** | Add new providers with a simple interface |
-| **OpenAI-compatible** | Works with any OpenAI-format client |
-| **macOS daemon** | Auto-starts at login via LaunchAgent |
-| **MCP server** | Manage the bridge from inside Cursor IDE |
+| Feature                 | Description                                     | Status |
+| ----------------------- | ----------------------------------------------- | ------ |
+| **Zero-config**         | One command to install, configure, and connect  | ✅     |
+| **Full feature parity** | Tool calls, multi-turn conversations, streaming | ✅     |
+| **Plugin architecture** | Add new providers with a simple interface       | ✅     |
+| **OpenAI-compatible**   | Works with any OpenAI-format client             | ✅     |
+| **macOS daemon**        | Auto-starts at login via LaunchAgent            | ✅     |
+| **Linux systemd**       | Auto-starts via systemd service                 | 🚧     |
+| **MCP server**          | Manage the bridge from inside Cursor IDE        | ✅     |
+| **Docker ready**        | Official images on GitHub Container Registry    | ✅     |
+| **Homebrew tap**        | One-line install on macOS                       | ✅     |
+| **Binary releases**     | Pre-built for macOS arm64/x64, Linux x64        | ✅     |
 
 ## Supported Providers
 
-| Provider | Package | Status |
-|----------|---------|--------|
-| [Cursor](https://cursor.com) | `@llm-bridge/cursor` | ✅ Built-in |
-| GitHub Copilot | `@llm-bridge/copilot` | 🚧 Planned |
-| Windsurf | `@llm-bridge/windsurf` | 🚧 Planned |
+| Provider                     | Package                | Status      |
+| ---------------------------- | ---------------------- | ----------- |
+| [Cursor](https://cursor.com) | `@llm-bridge/cursor`   | ✅ Built-in |
+| GitHub Copilot               | `@llm-bridge/copilot`  | 🚧 Planned  |
+| Windsurf                     | `@llm-bridge/windsurf` | 🚧 Planned  |
 
 Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
@@ -70,12 +104,12 @@ Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
 llm-bridge is a **monorepo** with four packages:
 
-| Package | Description |
-|---------|-------------|
-| `@llm-bridge/core` | HTTP server, plugin registry, session management, request/response formatting |
-| `@llm-bridge/cursor` | Cursor SDK plugin — the reference implementation |
-| `@llm-bridge/mcp` | MCP server for Cursor IDE integration |
-| `llm-bridge` | CLI — setup wizard, server launcher, config injector, diagnostics |
+| Package              | Description                                                                   |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `@llm-bridge/core`   | HTTP server, plugin registry, session management, request/response formatting |
+| `@llm-bridge/cursor` | Cursor SDK plugin — the reference implementation                              |
+| `@llm-bridge/mcp`    | MCP server for Cursor IDE integration                                         |
+| `llm-bridge`         | CLI — setup wizard, server launcher, config injector, diagnostics             |
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -102,14 +136,14 @@ Environment variables override config file values: `LLM_BRIDGE_PORT`, `LLM_BRIDG
 
 ## CLI Commands
 
-| Command | Description |
-|---------|-------------|
-| `llm-bridge init` | Interactive setup wizard |
-| `llm-bridge start` | Launch bridge server |
-| `llm-bridge configure` | Inject provider config into OpenCode |
-| `llm-bridge doctor` | Run diagnostics |
-| `llm-bridge install-daemon` | Install macOS LaunchAgent |
-| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent |
+| Command                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `llm-bridge init`             | Interactive setup wizard             |
+| `llm-bridge start`            | Launch bridge server                 |
+| `llm-bridge configure`        | Inject provider config into OpenCode |
+| `llm-bridge doctor`           | Run diagnostics                      |
+| `llm-bridge install-daemon`   | Install macOS LaunchAgent            |
+| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent             |
 
 ## Adding a Provider
 
@@ -119,6 +153,30 @@ Environment variables override config file values: `LLM_BRIDGE_PORT`, `LLM_BRIDG
 4. Submit a PR
 
 See [docs/plugin-development.md](docs/plugin-development.md) for the full guide.
+
+## Development
+
+```bash
+git clone https://github.com/aeswibon/llm-bridge.git
+cd llm-bridge
+pnpm install
+pnpm build
+pnpm test
+```
+
+### Project Structure
+
+```
+llm-bridge/
+├── packages/
+│   ├── core/           # @llm-bridge/core
+│   ├── cursor/         # @llm-bridge/cursor
+│   └── mcp/            # @llm-bridge/mcp
+├── cli/                # llm-bridge CLI
+├── docs/               # Architecture, plugin dev guide, troubleshooting
+├── examples/           # OpenCode config, docker-compose
+└── .github/            # Workflows, issue templates, homebrew tap
+```
 
 ## Troubleshooting
 
@@ -130,9 +188,9 @@ Run `llm-bridge doctor` for a full diagnostic check.
 
 See [ROADMAP.md](ROADMAP.md) for the full development plan.
 
-**Phase 1** ✅ — Core framework, Cursor plugin, CLI, docs
-**Phase 2** 🚧 — Copilot/Windsurf plugins, OAuth, Linux/Windows daemons
-**Phase 3** 🔮 — Plugin marketplace, enterprise features, multi-language SDKs
+- **Phase 1** ✅ — Core framework, Cursor plugin, CLI, docs, CI/CD, Docker, Homebrew, releases
+- **Phase 2** 🚧 — Copilot/Windsurf plugins, OAuth, Linux/Windows daemons
+- **Phase 3** 🔮 — Plugin marketplace, enterprise features, multi-language SDKs
 
 ## Contributing
 
