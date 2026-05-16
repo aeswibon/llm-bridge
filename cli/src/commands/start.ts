@@ -1,5 +1,6 @@
 import { BridgeServer, loadConfig } from '@llm-bridge/core';
 import { CursorBridgePlugin } from '@llm-bridge/cursor';
+import { CopilotBridgePlugin } from '@llm-bridge/copilot';
 
 export async function startCommand(): Promise<void> {
   const config = loadConfig();
@@ -10,6 +11,11 @@ export async function startCommand(): Promise<void> {
     server.registerPlugin(plugin);
     server.setActivePlugin('cursor');
     console.error(`[llm-bridge] active plugin: cursor`);
+  } else if (config.activePlugin === 'copilot') {
+    const plugin = new CopilotBridgePlugin();
+    server.registerPlugin(plugin);
+    server.setActivePlugin('copilot');
+    console.error(`[llm-bridge] active plugin: copilot`);
   } else {
     console.error(`[llm-bridge] warning: unknown plugin "${config.activePlugin}"`);
   }
