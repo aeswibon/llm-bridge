@@ -49,4 +49,26 @@ describe("PluginRegistry", () => {
     expect(names).toContain("cursor");
     expect(names).toContain("copilot");
   });
+
+  it("throws when setting unknown active plugin", () => {
+    const registry = new PluginRegistry();
+    expect(() => registry.setActive("nonexistent")).toThrow('Plugin "nonexistent" is not registered');
+  });
+
+  it("tracks plugin health", () => {
+    const registry = new PluginRegistry();
+    registry.register(mockPlugin("cursor"));
+    const health = registry.getHealth("cursor");
+    expect(health).toBeDefined();
+    expect(health?.healthy).toBe(true);
+  });
+
+  it("marks plugin as unhealthy", () => {
+    const registry = new PluginRegistry();
+    registry.register(mockPlugin("cursor"));
+    registry.markUnhealthy("cursor", "connection failed");
+    const health = registry.getHealth("cursor");
+    expect(health?.healthy).toBe(false);
+    expect(health?.error).toBe("connection failed");
+  });
 });
