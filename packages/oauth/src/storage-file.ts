@@ -1,8 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
-import { hostname } from 'node:os';
 import type { StoredToken, TokenStore } from './types.js';
 
 const ALGORITHM = 'aes-256-cbc';

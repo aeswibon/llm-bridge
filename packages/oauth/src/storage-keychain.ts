@@ -48,8 +48,14 @@ export function createKeychainStore(): TokenStore | null {
       const secret = JSON.stringify(token);
 
       if (os === 'darwin') {
+        // Use printf to avoid shell injection from special characters in the secret
+        const escaped = secret
+          .replace(/\\/g, '\\\\')
+          .replace(/"/g, '\\"')
+          .replace(/\$/g, '\\$')
+          .replace(/`/g, '\\`');
         execSync(
-          `security add-generic-password -s "${SERVICE_NAME}" -a "${account}" -w "${secret}" -U`,
+          `security add-generic-password -s "${SERVICE_NAME}" -a "${account}" -w "${escaped}" -U`,
           {
             stdio: 'ignore',
           },
@@ -76,13 +82,14 @@ export function createKeychainStore(): TokenStore | null {
       try {
         if (os === 'darwin') {
           const output = execSync(
-            `security find-generic-password -s "${SERVICE_NAME}" -a "${account}" -w`,
+            `security find-generic-password -s "${SERVICE_NAME}" -a "${account}" -w 2>/dev/null`,
             {
               stdio: ['ignore', 'pipe', 'ignore'],
             },
           )
             .toString()
             .trim();
+          if (!output) return null;
           return JSON.parse(output) as StoredToken;
         } else if (os === 'linux') {
           const output = execSync(
@@ -93,16 +100,9 @@ export function createKeychainStore(): TokenStore | null {
           ).toString();
           return JSON.parse(output) as StoredToken;
         } else if (os === 'win32') {
-          const output = execSync(
-            `powershell -Command "[System.Net.CredentialManagement.Credential]::new('${account}').Password"`,
-            {
-              stdio: ['ignore', 'pipe', 'ignore'],
-            },
-          )
-            .toString()
-            .trim();
-          if (!output) return null;
-          return JSON.parse(output) as StoredToken;
+          // Windows Credential Manager requires PasswordVault API which has
+          // different semantics. Fall back to encrypted file store.
+          return null;
         }
       } catch {
         return null;

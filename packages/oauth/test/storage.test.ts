@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createFileStore } from '../src/storage-file.js';
 import type { StoredToken } from '../src/types.js';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
+
+// We need to test createFileStore with a custom path
+// Since the file path is hardcoded in storage-file.ts, we'll test via the public API
+// and clean up after each test
 
 describe('createFileStore', () => {
   let store: ReturnType<typeof createFileStore>;
@@ -18,6 +25,8 @@ describe('createFileStore', () => {
 
   afterEach(async () => {
     await store.delete('test-provider');
+    await store.delete('copilot');
+    await store.delete('cursor');
   });
 
   it('stores and retrieves a token', async () => {
@@ -50,5 +59,16 @@ describe('createFileStore', () => {
 
     await store.delete('copilot');
     await store.delete('cursor');
+  });
+});
+
+describe('createTokenStore', () => {
+  it('returns a TokenStore', async () => {
+    const { createTokenStore } = await import('../src/storage.js');
+    const store = createTokenStore();
+    expect(store).toBeDefined();
+    expect(typeof store.set).toBe('function');
+    expect(typeof store.get).toBe('function');
+    expect(typeof store.delete).toBe('function');
   });
 });
