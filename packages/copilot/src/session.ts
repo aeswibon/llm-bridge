@@ -97,7 +97,7 @@ export class CopilotBridgeSession implements BridgeSession {
               }
             }
 
-            if (parsed.choices?.[0]?.finish_reason) {
+            if (parsed.choices?.[0]?.finish_reason && !finished) {
               const reason = parsed.choices[0].finish_reason;
               const finishReason =
                 reason === 'stop'
