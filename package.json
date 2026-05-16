@@ -1,0 +1,22 @@
+{
+  "name": "llm-bridge",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Use any AI IDE's model catalog from any OpenAI-compatible client",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev --parallel"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
