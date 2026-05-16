@@ -8,12 +8,3 @@ coverage/
 .turbo/
 *.tsbuildinfo
 docs/superpowers/
-
-# Legacy files (replaced by monorepo structure)
-package-lock.json
-cursor-opencode-bridge.env.example
-scripts/cursor-opencode-bridge.sh
-scripts/install-launchagent.sh
-scripts/uninstall-launchagent.sh
-src/
-tsconfig.json
