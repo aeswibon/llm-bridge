@@ -1,22 +1,18 @@
 {
-  "name": "llm-bridge",
+  "name": "@llm-bridge/copilot",
   "version": "2.0.0",
   "type": "module",
-  "bin": {
-    "llm-bridge": "./dist/index.js"
-  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "dev": "tsc --watch",
-    "start": "node dist/index.js"
+    "dev": "tsc --watch"
   },
   "dependencies": {
-    "@llm-bridge/copilot": "workspace:*",
-    "@llm-bridge/core": "workspace:*",
-    "@llm-bridge/cursor": "workspace:*"
+    "@llm-bridge/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
