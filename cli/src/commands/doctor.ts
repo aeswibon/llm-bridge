@@ -1,11 +1,11 @@
-import http from "node:http";
-import { readConfig } from "../utils/config.js";
-import fs from "node:fs";
-import { configPath } from "@llm-bridge/core";
+import http from 'node:http';
+import { readConfig } from '../utils/config.js';
+import fs from 'node:fs';
+import { configPath } from '@llm-bridge/core';
 
 export async function doctorCommand(): Promise<void> {
   const config = readConfig();
-  console.log("llm-bridge diagnostics\n");
+  console.log('llm-bridge diagnostics\n');
   console.log(`Config: ${configPath()}`);
   console.log(`Active plugin: ${config.activePlugin}`);
   console.log(`Port: ${config.port}`);
@@ -13,9 +13,9 @@ export async function doctorCommand(): Promise<void> {
   console.log(`Tool mode: ${config.toolMode}`);
 
   if (fs.existsSync(configPath())) {
-    console.log("✓ Config file exists");
+    console.log('✓ Config file exists');
   } else {
-    console.log("✗ Config file not found (using defaults)");
+    console.log('✗ Config file not found (using defaults)');
   }
 
   const pluginConfig = config.plugins[config.activePlugin];
@@ -27,17 +27,19 @@ export async function doctorCommand(): Promise<void> {
 
   try {
     const res = await new Promise<number>((resolve, reject) => {
-      http.get(`http://${config.host}:${config.port}/health`, (res) => {
-        resolve(res.statusCode ?? 0);
-      }).on("error", reject);
+      http
+        .get(`http://${config.host}:${config.port}/health`, (res) => {
+          resolve(res.statusCode ?? 0);
+        })
+        .on('error', reject);
     });
     if (res === 200) {
-      console.log("✓ Bridge server is running");
+      console.log('✓ Bridge server is running');
     } else {
       console.log(`✗ Bridge server returned status ${res}`);
     }
   } catch {
-    console.log("✗ Cannot reach bridge server (is it running?)");
+    console.log('✗ Cannot reach bridge server (is it running?)');
   }
 
   try {
@@ -47,9 +49,9 @@ export async function doctorCommand(): Promise<void> {
         server.close();
         resolve();
       });
-      server.on("error", (err: any) => {
-        if (err.code === "EADDRINUSE") {
-          reject(new Error("Port in use"));
+      server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          reject(new Error('Port in use'));
         } else {
           resolve();
         }

@@ -1,4 +1,4 @@
-import type { BridgePlugin, PluginHealth } from "./types.js";
+import type { BridgePlugin, PluginHealth } from './types.js';
 
 export class PluginRegistry {
   private plugins: Map<string, BridgePlugin> = new Map();

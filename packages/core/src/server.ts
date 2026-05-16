@@ -1,9 +1,10 @@
-import http, { IncomingMessage, ServerResponse } from "node:http";
-import { BridgeConfig, DefaultConfig, BridgePlugin } from "./types.js";
-import { parseChatRequest } from "./parser.js";
-import { PluginRegistry } from "./registry.js";
-import { SessionStore } from "./session.js";
-import { formatStreamChunk, formatCompletion } from "./formatter.js";
+import http, { IncomingMessage, ServerResponse } from 'node:http';
+import crypto from 'node:crypto';
+import { BridgeConfig, DefaultConfig, BridgePlugin } from './types.js';
+import { parseChatRequest } from './parser.js';
+import { PluginRegistry } from './registry.js';
+import { SessionStore } from './session.js';
+import { formatStreamChunk, formatCompletion } from './formatter.js';
 
 export class BridgeServer {
   private server: http.Server | null = null;
@@ -20,9 +21,9 @@ export class BridgeServer {
   async start(): Promise<void> {
     this.server = http.createServer((req, res) => {
       this.handleRequest(req, res).catch((err) => {
-        console.error("[llm-bridge] unhandled error:", err);
+        console.error('[llm-bridge] unhandled error:', err);
         if (!res.headersSent) {
-          this.jsonResponse(res, 500, { error: { message: "internal error", type: "internal" } });
+          this.jsonResponse(res, 500, { error: { message: 'internal error', type: 'internal' } });
         }
       });
     });
@@ -30,7 +31,7 @@ export class BridgeServer {
     return new Promise((resolve) => {
       this.server!.listen(this.config.port, this.config.host, () => {
         const address = this.server!.address();
-        const port = typeof address === "object" ? address?.port : this.config.port;
+        const port = typeof address === 'object' ? address?.port : this.config.port;
         console.error(`[llm-bridge] listening on http://${this.config.host}:${port}`);
         resolve();
       });
@@ -44,36 +45,38 @@ export class BridgeServer {
     });
   }
 
-  address(): import("net").AddressInfo | string | null {
+  address(): import('net').AddressInfo | string | null {
     return this.server?.address() ?? null;
   }
 
   private async handleRequest(req: IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const url = new URL(req.url ?? "/", `http://${this.config.host}`);
-    const path = url.pathname.replace(/\/+$/, "") || "/";
+    const url = new URL(req.url ?? '/', `http://${this.config.host}`);
+    const path = url.pathname.replace(/\/+$/, '') || '/';
 
-    if (req.method === "GET" && path === "/health") {
-      this.jsonResponse(res, 200, { ok: true, service: "llm-bridge" });
+    if (req.method === 'GET' && path === '/health') {
+      this.jsonResponse(res, 200, { ok: true, service: 'llm-bridge' });
       return;
     }
 
-    if (req.method === "GET" && path === "/v1/models") {
+    if (req.method === 'GET' && path === '/v1/models') {
       await this.handleModels(req, res);
       return;
     }
 
-    if (req.method === "POST" && path === "/v1/chat/completions") {
+    if (req.method === 'POST' && path === '/v1/chat/completions') {
       await this.handleChatCompletions(req, res);
       return;
     }
 
-    this.jsonResponse(res, 404, { error: { message: `Not found: ${path}`, type: "not_found" } });
+    this.jsonResponse(res, 404, { error: { message: `Not found: ${path}`, type: 'not_found' } });
   }
 
   private async handleModels(_req: IncomingMessage, res: http.ServerResponse): Promise<void> {
     const plugin = this.registry.getActivePlugin();
     if (!plugin) {
-      this.jsonResponse(res, 503, { error: { message: "No active plugin configured", type: "configuration_error" } });
+      this.jsonResponse(res, 503, {
+        error: { message: 'No active plugin configured', type: 'configuration_error' },
+      });
       return;
     }
 
@@ -81,30 +84,37 @@ export class BridgeServer {
       const config = this.config.plugins[plugin.name] ?? {};
       const models = await plugin.listModels(config);
       this.jsonResponse(res, 200, {
-        object: "list",
+        object: 'list',
         data: models.map((m) => ({
           id: m.id,
-          object: "model",
+          object: 'model',
           created: Math.floor(Date.now() / 1000),
           owned_by: plugin.name,
         })),
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      this.jsonResponse(res, 502, { error: { message: msg, type: "provider_error" } });
+      this.jsonResponse(res, 502, { error: { message: msg, type: 'provider_error' } });
     }
   }
 
-  private async handleChatCompletions(req: IncomingMessage, res: http.ServerResponse): Promise<void> {
+  private async handleChatCompletions(
+    req: IncomingMessage,
+    res: http.ServerResponse,
+  ): Promise<void> {
     const plugin = this.registry.getActivePlugin();
     if (!plugin) {
-      this.jsonResponse(res, 503, { error: { message: "No active plugin configured", type: "configuration_error" } });
+      this.jsonResponse(res, 503, {
+        error: { message: 'No active plugin configured', type: 'configuration_error' },
+      });
       return;
     }
 
     const parsed = await parseChatRequest(req);
     if (!parsed.success) {
-      this.jsonResponse(res, 400, { error: { message: parsed.error, type: "invalid_request_error" } });
+      this.jsonResponse(res, 400, {
+        error: { message: parsed.error, type: 'invalid_request_error' },
+      });
       return;
     }
 
@@ -113,13 +123,13 @@ export class BridgeServer {
     try {
       const config = this.config.plugins[plugin.name] ?? {};
       const session = await plugin.createSession(config, model);
-      const sessionId = req.headers["x-session-id"] as string | undefined;
+      const sessionId = req.headers['x-session-id'] as string | undefined;
       this.sessions.set(sessionId ?? crypto.randomUUID(), session);
 
       res.writeHead(200, {
-        "Content-Type": stream ? "text/event-stream; charset=utf-8" : "application/json",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+        'Content-Type': stream ? 'text/event-stream; charset=utf-8' : 'application/json',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
       });
 
       const chunks: string[] = [];
@@ -127,7 +137,7 @@ export class BridgeServer {
         if (stream) {
           res.write(formatStreamChunk(chunk, model, `chatcmpl-${crypto.randomUUID()}`));
         } else {
-          if (chunk.type === "text" && chunk.content) {
+          if (chunk.type === 'text' && chunk.content) {
             chunks.push(chunk.content);
           }
         }
@@ -135,7 +145,7 @@ export class BridgeServer {
 
       if (!stream) {
         const completionId = `chatcmpl-${crypto.randomUUID()}`;
-        const completion = formatCompletion(chunks.join(""), model, completionId);
+        const completion = formatCompletion(chunks.join(''), model, completionId);
         res.end(JSON.stringify(completion));
       } else {
         res.write(`data: [DONE]\n\n`);
@@ -146,16 +156,18 @@ export class BridgeServer {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (stream && !res.writableEnded) {
-        res.write(`data: ${JSON.stringify({ error: { message: msg, type: "provider_error" } })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ error: { message: msg, type: 'provider_error' } })}\n\n`,
+        );
         res.end();
       } else if (!res.headersSent) {
-        this.jsonResponse(res, 502, { error: { message: msg, type: "provider_error" } });
+        this.jsonResponse(res, 502, { error: { message: msg, type: 'provider_error' } });
       }
     }
   }
 
   private jsonResponse(res: http.ServerResponse, status: number, body: unknown): void {
-    res.writeHead(status, { "Content-Type": "application/json" });
+    res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
   }
 
