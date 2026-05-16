@@ -26,6 +26,7 @@ export interface OAuthConfig {
   provider: OAuthProvider;
   store: TokenStore;
   onRefresh?: (newToken: StoredToken) => Promise<void>;
+  redirectUri?: string;
 }
 
 export interface PKCEState {
