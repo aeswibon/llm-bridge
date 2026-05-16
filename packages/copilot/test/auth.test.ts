@@ -31,9 +31,25 @@ describe('validateToken', () => {
     vi.restoreAllMocks();
   });
 
-  it('returns false on network error', async () => {
-    // In test environment, fetch will fail
+  it('returns true when API responds with 200', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+    } as Response);
+    const result = await validateToken('valid-token');
+    expect(result).toBe(true);
+  });
+
+  it('returns false when API responds with error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+    } as Response);
     const result = await validateToken('invalid-token');
+    expect(result).toBe(false);
+  });
+
+  it('returns false on network error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Network error'));
+    const result = await validateToken('bad-token');
     expect(result).toBe(false);
   });
 });

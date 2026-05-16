@@ -20,4 +20,10 @@ describe('COPILOT_MODELS', () => {
       expect(model.capabilities.streaming).toBe(true);
     }
   });
+
+  it('o1-mini-copilot has tools disabled', () => {
+    const o1Mini = COPILOT_MODELS.find((m) => m.id === 'o1-mini-copilot');
+    expect(o1Mini).toBeDefined();
+    expect(o1Mini?.capabilities.tools).toBe(false);
+  });
 });
