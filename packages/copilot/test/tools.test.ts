@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { translateTools, translateToolResult } from '../src/tools.js';
+import { translateTools } from '../src/tools.js';
 import type { ToolDefinition } from '@llm-bridge/core';
 
 describe('translateTools', () => {
@@ -30,13 +30,5 @@ describe('translateTools', () => {
     expect(result).toHaveLength(2);
     expect(result[0].function.name).toBe('a');
     expect(result[1].function.name).toBe('b');
-  });
-});
-
-describe('translateToolResult', () => {
-  it('formats tool result with ID', () => {
-    const result = translateToolResult('tc-1', 'search results');
-    expect(result).toContain('tc-1');
-    expect(result).toContain('search results');
   });
 });

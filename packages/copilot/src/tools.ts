@@ -19,7 +19,3 @@ export function translateTools(tools: ToolDefinition[]): CopilotTool[] {
     },
   }));
 }
-
-export function translateToolResult(toolCallId: string, result: string): string {
-  return `[tool result for ${toolCallId}]\n${result}`;
-}
