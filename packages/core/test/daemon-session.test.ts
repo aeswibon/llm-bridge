@@ -142,7 +142,9 @@ describe('DaemonBridgeSession', () => {
           proc.stderr = new EventEmitter();
           proc.kill = vi.fn(() => true);
           proc.pid = 12345;
-          setTimeout(() => proc.emit('error', new Error('Daemon crashed')), 10);
+          setTimeout(() => {
+            proc.emit('error', new Error('Daemon crashed'));
+          }, 10);
           return proc;
         },
         healthCheck: async () => true,
@@ -157,6 +159,115 @@ describe('DaemonBridgeSession', () => {
 
       expect(chunks).toHaveLength(1);
       expect(chunks[0].type).toBe('error');
+    });
+
+    it('yields error on concurrent send() calls', async () => {
+      const messages: Message[] = [{ role: 'user', content: 'Hi' }];
+
+      setTimeout(() => {
+        daemon.emitOutput([
+          JSON.stringify({ jsonrpc: '2.0', method: 'chat/done', params: { id: 1, finishReason: 'stop' } }),
+        ]);
+      }, 20);
+
+      const firstGen = session.send(messages);
+      const firstPromise = (async () => {
+        for await (const _ of firstGen) {
+          // consume
+        }
+      })();
+
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      const secondGen = session.send(messages);
+      const chunks: StreamChunk[] = [];
+      for await (const chunk of secondGen) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0].type).toBe('error');
+      expect(chunks[0].content).toContain('concurrent send()');
+
+      await firstPromise;
+    });
+
+    it('captures stderr and includes it in error output', async () => {
+      const mockStdout = new EventEmitter() as NodeJS.ReadableStream;
+      const mockStdin = new EventEmitter() as NodeJS.WritableStream;
+      (mockStdin as any).write = vi.fn(() => true);
+
+      const mockStderr = new EventEmitter();
+      const mockProc = new EventEmitter() as any;
+      mockProc.stdin = mockStdin;
+      mockProc.stdout = mockStdout;
+      mockProc.stderr = mockStderr;
+      mockProc.kill = vi.fn(() => true);
+      mockProc.pid = 12345;
+
+      const stderrDaemon: DaemonManager = {
+        binaryName: 'stderr-test',
+        locate: async () => '/mock/path',
+        download: async () => '/mock/path',
+        spawn: () => {
+          setTimeout(() => {
+            mockStderr.emit('data', Buffer.from('fatal: daemon crashed\n'));
+            mockProc.emit('error', new Error('process error'));
+          }, 10);
+          return mockProc;
+        },
+        healthCheck: async () => true,
+      };
+
+      const stderrSession = new DaemonBridgeSession(stderrDaemon, 'token', 'model', '/cwd');
+      const chunks: StreamChunk[] = [];
+
+      for await (const chunk of stderrSession.send([{ role: 'user', content: 'Hi' }])) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0].type).toBe('error');
+      expect(chunks[0].content).toContain('stderr:');
+      expect(chunks[0].content).toContain('daemon crashed');
+    });
+
+    it('yields error when stdout buffer exceeds max size', async () => {
+      const mockStdout = new EventEmitter() as NodeJS.ReadableStream;
+      const mockStdin = new EventEmitter() as NodeJS.WritableStream;
+      (mockStdin as any).write = vi.fn(() => true);
+
+      const mockProc = new EventEmitter() as any;
+      mockProc.stdin = mockStdin;
+      mockProc.stdout = mockStdout;
+      mockProc.stderr = new EventEmitter();
+      mockProc.kill = vi.fn(() => true);
+      mockProc.pid = 12345;
+
+      const overflowDaemon: DaemonManager = {
+        binaryName: 'overflow-test',
+        locate: async () => '/mock/path',
+        download: async () => '/mock/path',
+        spawn: () => {
+          setTimeout(() => {
+            mockStdout.emit('data', Buffer.from('\n'));
+            mockStdout.emit('data', Buffer.from('x'.repeat(1024 * 1024 + 1)));
+          }, 10);
+          return mockProc;
+        },
+        healthCheck: async () => true,
+      };
+
+      const overflowSession = new DaemonBridgeSession(overflowDaemon, 'token', 'model', '/cwd');
+      const chunks: StreamChunk[] = [];
+
+      for await (const chunk of overflowSession.send([{ role: 'user', content: 'Hi' }])) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0].type).toBe('error');
+      expect(chunks[0].content).toContain('exceeded max size');
     });
   });
 
