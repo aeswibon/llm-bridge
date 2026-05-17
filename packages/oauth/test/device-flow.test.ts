@@ -171,5 +171,81 @@ describe('DeviceFlow', () => {
 
       vi.useRealTimers();
     });
+
+    it('throws if poll() is called without start()', async () => {
+      const newFlow = new DeviceFlow(config);
+      await expect(newFlow.poll()).rejects.toThrow('No device code. Call start() first.');
+    });
+
+    it('throws on generic error from token endpoint', async () => {
+      vi.useFakeTimers();
+
+      const deviceFlow = new DeviceFlow(config);
+      (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-err';
+      (deviceFlow as unknown as Record<string, unknown>).interval = 100;
+      (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: 'access_denied' }),
+      } as Response);
+
+      const caught = deviceFlow.poll().catch((e) => e);
+      await vi.advanceTimersByTimeAsync(200);
+      const err = await caught;
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).toBe('Device flow error: access_denied');
+
+      vi.useRealTimers();
+    });
+
+    it('calls store.set with provider ID and token on success', async () => {
+      vi.useFakeTimers();
+
+      const store = createMockStore();
+      const setSpy = vi.spyOn(store, 'set');
+
+      const deviceFlow = new DeviceFlow({ ...config, store });
+      (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-store';
+      (deviceFlow as unknown as Record<string, unknown>).interval = 100;
+      (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          access_token: 'access-456',
+          refresh_token: 'refresh-456',
+          expires_in: 7200,
+          scope: 'read:user repo',
+        }),
+      } as Response);
+
+      const pollPromise = deviceFlow.poll();
+      await vi.advanceTimersByTimeAsync(200);
+      await pollPromise;
+
+      expect(setSpy).toHaveBeenCalledWith('github-device', expect.objectContaining({
+        accessToken: 'access-456',
+        refreshToken: 'refresh-456',
+        scopes: ['read:user', 'repo'],
+      }));
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe('start error body', () => {
+    it('includes response body in error message', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        text: async () => '{"error":"invalid_client","error_description":"Client ID is invalid"}',
+      } as Response);
+
+      await expect(flow.start()).rejects.toThrow(
+        'Device code request failed: 400 {"error":"invalid_client","error_description":"Client ID is invalid"}',
+      );
+    });
   });
 });
