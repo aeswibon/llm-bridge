@@ -61,14 +61,18 @@ export class DaemonBridgeSession implements BridgeSession {
     let capturedError: Error | null = null;
     let onDataResolve: (() => void) | null = null;
 
-    this.proc.stderr?.on('data', (data: Buffer) => {
+    const onStderr = (data: Buffer) => {
       stderrBuffer += data.toString();
-    });
+    };
+    this.proc.stderr?.on('data', onStderr);
 
     const onData = (data: Buffer) => {
-      buffer += data.toString();
-      if (buffer.length > MAX_BUFFER_SIZE) {
+      if (buffer.length <= MAX_BUFFER_SIZE) {
+        buffer += data.toString();
+      }
+      if (buffer.length > MAX_BUFFER_SIZE && !capturedError) {
         capturedError = new Error(`stdout buffer exceeded max size of ${MAX_BUFFER_SIZE} bytes`);
+        onDataResolve?.();
       }
       onDataResolve?.();
     };
@@ -80,8 +84,16 @@ export class DaemonBridgeSession implements BridgeSession {
       }
     };
 
+    const onExit = (code: number | null) => {
+      if (!finished && !capturedError) {
+        capturedError = new Error(`Process exited with code ${code ?? 'unknown'}`);
+        onDataResolve?.();
+      }
+    };
+
     this.proc.stdout!.on('data', onData);
     this.proc.on('error', onError);
+    this.proc.on('exit', onExit);
 
     try {
       while (!finished) {
@@ -162,6 +174,8 @@ export class DaemonBridgeSession implements BridgeSession {
     } finally {
       this.proc?.stdout?.removeListener('data', onData);
       this.proc?.removeListener('error', onError);
+      this.proc?.removeListener('exit', onExit);
+      this.proc?.stderr?.removeListener('data', onStderr);
       this.busy = false;
     }
   }
