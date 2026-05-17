@@ -3,10 +3,7 @@ import type { StoredToken, RefreshQueueEntry } from './types.js';
 export class RefreshQueue {
   private pending = new Map<string, RefreshQueueEntry>();
 
-  enqueue(
-    provider: string,
-    refreshFn: () => Promise<StoredToken>,
-  ): Promise<StoredToken> {
+  enqueue(provider: string, refreshFn: () => Promise<StoredToken>): Promise<StoredToken> {
     const existing = this.pending.get(provider);
     if (existing) return existing.promise;
 

@@ -5,10 +5,18 @@ import type { OAuthConfig, TokenStore, StoredToken } from '../src/types.js';
 function createMockStore(): TokenStore & { getData(): Map<string, StoredToken> } {
   const data = new Map<string, StoredToken>();
   return {
-    async set(provider: string, token: StoredToken) { data.set(provider, token); },
-    async get(provider: string) { return data.get(provider) ?? null; },
-    async delete(provider: string) { data.delete(provider); },
-    getData() { return data; },
+    async set(provider: string, token: StoredToken) {
+      data.set(provider, token);
+    },
+    async get(provider: string) {
+      return data.get(provider) ?? null;
+    },
+    async delete(provider: string) {
+      data.delete(provider);
+    },
+    getData() {
+      return data;
+    },
   };
 }
 
@@ -150,7 +158,9 @@ describe('OAuthFlow', () => {
 
     it('throws if callback called before start', async () => {
       const freshFlow = new OAuthFlow(config, store);
-      await expect(freshFlow.callback('orphan-code', 'any-state')).rejects.toThrow('No pending PKCE state');
+      await expect(freshFlow.callback('orphan-code', 'any-state')).rejects.toThrow(
+        'No pending PKCE state',
+      );
     });
 
     it('throws on network errors', async () => {

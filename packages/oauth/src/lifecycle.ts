@@ -52,7 +52,7 @@ export class TokenLifecycle {
       throw new Error(`Token refresh failed: ${response.status} ${body}`);
     }
 
-    const data = await response.json() as Record<string, unknown>;
+    const data = (await response.json()) as Record<string, unknown>;
 
     if (!data.access_token) {
       throw new Error('Invalid token response: missing access_token');

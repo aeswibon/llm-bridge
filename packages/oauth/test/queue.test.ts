@@ -30,10 +30,16 @@ describe('RefreshQueue', () => {
 
   it('allows concurrent requests for different providers', async () => {
     const refreshA = vi.fn().mockResolvedValue({
-      version: 1, accessToken: 'token-a', expiresAt: Date.now() + 3600000, scopes: [],
+      version: 1,
+      accessToken: 'token-a',
+      expiresAt: Date.now() + 3600000,
+      scopes: [],
     } as StoredToken);
     const refreshB = vi.fn().mockResolvedValue({
-      version: 1, accessToken: 'token-b', expiresAt: Date.now() + 3600000, scopes: [],
+      version: 1,
+      accessToken: 'token-b',
+      expiresAt: Date.now() + 3600000,
+      scopes: [],
     } as StoredToken);
 
     const [resultA, resultB] = await Promise.all([
@@ -64,7 +70,10 @@ describe('RefreshQueue', () => {
 
   it('clears queue entry after completion', async () => {
     const refreshFn = vi.fn().mockResolvedValue({
-      version: 1, accessToken: 'token', expiresAt: Date.now() + 3600000, scopes: [],
+      version: 1,
+      accessToken: 'token',
+      expiresAt: Date.now() + 3600000,
+      scopes: [],
     } as StoredToken);
 
     await queue.enqueue('provider', refreshFn);

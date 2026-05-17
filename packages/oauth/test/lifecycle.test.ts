@@ -5,9 +5,15 @@ import type { TokenStore, StoredToken, OAuthConfig, OAuthProvider } from '../src
 function createMockStore(): TokenStore {
   const data = new Map<string, StoredToken>();
   return {
-    async set(provider: string, token: StoredToken) { data.set(provider, token); },
-    async get(provider: string) { return data.get(provider) ?? null; },
-    async delete(provider: string) { data.delete(provider); },
+    async set(provider: string, token: StoredToken) {
+      data.set(provider, token);
+    },
+    async get(provider: string) {
+      return data.get(provider) ?? null;
+    },
+    async delete(provider: string) {
+      data.delete(provider);
+    },
   };
 }
 
@@ -104,9 +110,12 @@ describe('TokenLifecycle', () => {
       const refreshed = await lifecycleWithConfig.refresh('test');
 
       expect(refreshed.accessToken).toBe('new-access');
-      expect(fetchSpy).toHaveBeenCalledWith(testProvider.tokenUrl, expect.objectContaining({
-        method: 'POST',
-      }));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        testProvider.tokenUrl,
+        expect.objectContaining({
+          method: 'POST',
+        }),
+      );
 
       fetchSpy.mockRestore();
     });
@@ -123,7 +132,9 @@ describe('TokenLifecycle', () => {
       const config: OAuthConfig = { provider: testProvider, store };
       const lifecycleWithConfig = new TokenLifecycle(store, { config });
 
-      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('No refresh token available');
+      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow(
+        'No refresh token available',
+      );
     });
 
     it('throws when OAuthConfig is not provided', async () => {
@@ -138,7 +149,9 @@ describe('TokenLifecycle', () => {
 
       const lifecycleWithoutConfig = new TokenLifecycle(store);
 
-      await expect(lifecycleWithoutConfig.refresh('test')).rejects.toThrow('OAuthConfig required for token refresh');
+      await expect(lifecycleWithoutConfig.refresh('test')).rejects.toThrow(
+        'OAuthConfig required for token refresh',
+      );
     });
 
     it('calls onRefresh callback with new token', async () => {
@@ -162,9 +175,11 @@ describe('TokenLifecycle', () => {
       const lifecycleWithConfig = new TokenLifecycle(store, { config });
       await lifecycleWithConfig.refresh('test');
 
-      expect(onRefresh).toHaveBeenCalledWith(expect.objectContaining({
-        accessToken: 'new',
-      }));
+      expect(onRefresh).toHaveBeenCalledWith(
+        expect.objectContaining({
+          accessToken: 'new',
+        }),
+      );
     });
 
     it('throws on refresh failure', async () => {
@@ -186,7 +201,9 @@ describe('TokenLifecycle', () => {
       const config: OAuthConfig = { provider: testProvider, store };
       const lifecycleWithConfig = new TokenLifecycle(store, { config });
 
-      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('Token refresh failed: 400');
+      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow(
+        'Token refresh failed: 400',
+      );
     });
 
     it('preserves refresh_token when server does not return a new one', async () => {
@@ -251,7 +268,9 @@ describe('TokenLifecycle', () => {
       const config: OAuthConfig = { provider: testProvider, store };
       const lifecycleWithConfig = new TokenLifecycle(store, { config });
 
-      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('Invalid token response: missing access_token');
+      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow(
+        'Invalid token response: missing access_token',
+      );
     });
   });
 });

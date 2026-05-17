@@ -68,11 +68,14 @@ export class DeviceFlow {
 
       const response = await fetch(this.config.provider.tokenUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
         body: params.toString(),
       });
 
-      const data = await response.json() as Record<string, unknown>;
+      const data = (await response.json()) as Record<string, unknown>;
 
       if (response.ok) {
         if (!data.access_token) {
@@ -93,7 +96,7 @@ export class DeviceFlow {
 
       const error = data.error as string;
       if (error === 'slow_down') {
-        this.interval += (data.interval as number ?? 0) * 1000 + SLOW_DOWN_BACKOFF_MS;
+        this.interval += ((data.interval as number) ?? 0) * 1000 + SLOW_DOWN_BACKOFF_MS;
       } else if (error !== 'authorization_pending') {
         throw new Error(`Device flow error: ${error}`);
       }

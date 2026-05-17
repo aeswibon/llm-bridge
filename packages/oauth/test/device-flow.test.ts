@@ -5,9 +5,15 @@ import type { OAuthConfig, TokenStore, StoredToken } from '../src/types.js';
 function createMockStore(): TokenStore {
   const data = new Map<string, StoredToken>();
   return {
-    async set(provider: string, token: StoredToken) { data.set(provider, token); },
-    async get(provider: string) { return data.get(provider) ?? null; },
-    async delete(provider: string) { data.delete(provider); },
+    async set(provider: string, token: StoredToken) {
+      data.set(provider, token);
+    },
+    async get(provider: string) {
+      return data.get(provider) ?? null;
+    },
+    async delete(provider: string) {
+      data.delete(provider);
+    },
   };
 }
 
@@ -82,7 +88,9 @@ describe('DeviceFlow', () => {
         json: async () => ({ device_code: 'abc' }),
       } as Response);
 
-      await expect(flow.start()).rejects.toThrow('Invalid device code response: missing required fields');
+      await expect(flow.start()).rejects.toThrow(
+        'Invalid device code response: missing required fields',
+      );
     });
   });
 
@@ -298,11 +306,14 @@ describe('DeviceFlow', () => {
       await vi.advanceTimersByTimeAsync(200);
       await pollPromise;
 
-      expect(setSpy).toHaveBeenCalledWith('github-device', expect.objectContaining({
-        accessToken: 'access-456',
-        refreshToken: 'refresh-456',
-        scopes: ['read:user', 'repo'],
-      }));
+      expect(setSpy).toHaveBeenCalledWith(
+        'github-device',
+        expect.objectContaining({
+          accessToken: 'access-456',
+          refreshToken: 'refresh-456',
+          scopes: ['read:user', 'repo'],
+        }),
+      );
 
       vi.useRealTimers();
     });
