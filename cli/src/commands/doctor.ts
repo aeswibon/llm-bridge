@@ -18,11 +18,12 @@ export async function doctorCommand(): Promise<void> {
     console.log('✗ Config file not found (using defaults)');
   }
 
-  const pluginConfig = config.plugins[config.activePlugin];
+  const activePlugin = config.activePlugin ?? config.defaultPlugin;
+  const pluginConfig = config.plugins[activePlugin];
   if (pluginConfig && Object.keys(pluginConfig).length > 0) {
-    console.log(`✓ Plugin "${config.activePlugin}" has configuration`);
+    console.log(`✓ Plugin "${activePlugin}" has configuration`);
   } else {
-    console.log(`✗ Plugin "${config.activePlugin}" has no configuration`);
+    console.log(`✗ Plugin "${activePlugin}" has no configuration`);
   }
 
   try {
