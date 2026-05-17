@@ -1,0 +1,22 @@
+{
+  "name": "@llm-bridge/windsurf",
+  "version": "2.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@llm-bridge/core": "workspace:*",
+    "@llm-bridge/oauth": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "vitest": "^2.0.0"
+  }
+}
