@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createDaemonManager } from '../src/daemon.js';
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -105,7 +106,7 @@ describe('createDaemonManager', () => {
   });
 
   describe('spawn', () => {
-    it('spawns a process with stdio pipes', () => {
+    it('spawns a process with stdio pipes using provided binary path', () => {
       const manager = createDaemonManager({
         binaryName: 'echo',
         downloadUrl: 'https://example.com/binary',
@@ -113,12 +114,148 @@ describe('createDaemonManager', () => {
         knownPaths: [],
       });
 
-      const proc = manager.spawn(['hello']);
+      const proc = manager.spawn('/bin/echo', ['hello']);
       expect(proc.stdin).not.toBeNull();
       expect(proc.stdout).not.toBeNull();
       expect(proc.stderr).not.toBeNull();
 
       proc.kill();
+    });
+  });
+
+  describe('download', () => {
+    let server: Server;
+    let port: number;
+
+    afterEach(() => {
+      if (server) {
+        server.close();
+      }
+    });
+
+    function startServer(
+      handler: (
+        req: import('node:http').IncomingMessage,
+        res: import('node:http').ServerResponse,
+      ) => void,
+    ): Promise<number> {
+      return new Promise((resolve) => {
+        server = createServer(handler);
+        server.listen(0, () => {
+          port = (server.address() as import('node:net').AddressInfo).port;
+          resolve(port);
+        });
+      });
+    }
+
+    it('downloads a binary and makes it executable', async () => {
+      const content = '#!/bin/bash\necho hello';
+      const checksum =
+        'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
+
+      await startServer((_req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+        res.end(content);
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'test-daemon',
+        downloadUrl: `http://localhost:${port}/binary`,
+        checksum,
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      const result = await manager.download();
+      expect(result).toBe(join(testDir, 'test-daemon'));
+      expect(existsSync(result)).toBe(true);
+
+      const stats = statSync(result);
+      expect(stats.mode & 0o755).toBe(0o755);
+    });
+
+    it('follows redirects up to the limit', async () => {
+      const content = '#!/bin/bash\necho hello';
+      const checksum =
+        'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
+      let redirectCount = 0;
+
+      await startServer((_req, res) => {
+        redirectCount++;
+        if (redirectCount < 3) {
+          res.writeHead(302, { Location: `http://localhost:${port}/step${redirectCount}` });
+          res.end();
+        } else {
+          res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+          res.end(content);
+        }
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'redirect-daemon',
+        downloadUrl: `http://localhost:${port}/step0`,
+        checksum,
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      const result = await manager.download();
+      expect(result).toBe(join(testDir, 'redirect-daemon'));
+      expect(redirectCount).toBe(3);
+    });
+
+    it('cleans up file on checksum mismatch', async () => {
+      const content = '#!/bin/bash\necho hello';
+
+      await startServer((_req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+        res.end(content);
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'bad-checksum-daemon',
+        downloadUrl: `http://localhost:${port}/binary`,
+        checksum: '0000000000000000000000000000000000000000000000000000000000000000',
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      await expect(manager.download()).rejects.toThrow('Checksum mismatch');
+      expect(existsSync(join(testDir, 'bad-checksum-daemon'))).toBe(false);
+    });
+
+    it('rejects on too many redirects', async () => {
+      await startServer((_req, res) => {
+        res.writeHead(302, { Location: `http://localhost:${port}/next` });
+        res.end();
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'loop-daemon',
+        downloadUrl: `http://localhost:${port}/start`,
+        checksum: 'abc123',
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      await expect(manager.download()).rejects.toThrow('Too many redirects');
+    });
+
+    it('rejects on non-200 status', async () => {
+      await startServer((_req, res) => {
+        res.writeHead(404);
+        res.end();
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'notfound-daemon',
+        downloadUrl: `http://localhost:${port}/binary`,
+        checksum: 'abc123',
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      await expect(manager.download()).rejects.toThrow('Download failed: 404');
     });
   });
 });

@@ -1,16 +1,17 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir, platform, arch } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { IncomingMessage } from 'node:http';
-import { get } from 'node:https';
+import { IncomingMessage, request as httpRequest } from 'node:http';
+import { request as httpsRequest } from 'node:https';
+import { URL } from 'node:url';
 
 export interface DaemonManager {
   binaryName: string;
   locate(): Promise<string | null>;
   download(): Promise<string>;
-  spawn(args: string[]): ChildProcess;
+  spawn(binaryPath: string, args: string[]): ChildProcess;
   healthCheck(port?: number): Promise<boolean>;
 }
 
@@ -57,37 +58,77 @@ export function createDaemonManager(config: {
         .replace('{platform}', platform())
         .replace('{arch}', arch());
 
-      return new Promise((resolve, reject) => {
-        const req = get(url, (res: IncomingMessage) => {
-          if (res.statusCode !== 200) {
-            reject(new Error(`Download failed: ${res.statusCode}`));
-            return;
-          }
+      const MAX_REDIRECTS = 5;
 
-          const chunks: Buffer[] = [];
-          res.on('data', (chunk: Buffer) => chunks.push(chunk));
-          res.on('end', () => {
-            const data = Buffer.concat(chunks);
-            writeFileSync(destPath, data);
-            const hash = createHash('sha256').update(data).digest('hex');
-            if (hash !== config.checksum) {
-              reject(
-                new Error(
-                  `Checksum mismatch: expected ${config.checksum}, got ${hash}`,
-                ),
-              );
+      const followRedirect = (
+        currentUrl: string,
+        redirectCount: number,
+      ): Promise<Buffer> =>
+        new Promise((resolve, reject) => {
+          const parsed = new URL(currentUrl);
+          const requestFn = parsed.protocol === 'https:' ? httpsRequest : httpRequest;
+
+          const req = requestFn(currentUrl, (res: IncomingMessage) => {
+            if (
+              res.statusCode === 301 ||
+              res.statusCode === 302 ||
+              res.statusCode === 307 ||
+              res.statusCode === 308
+            ) {
+              if (redirectCount >= MAX_REDIRECTS) {
+                reject(new Error('Too many redirects'));
+                return;
+              }
+              const location = res.headers.location;
+              if (location) {
+                const resolved = new URL(location, currentUrl).href;
+                res.resume();
+                followRedirect(resolved, redirectCount + 1)
+                  .then(resolve)
+                  .catch(reject);
+              } else {
+                reject(new Error('Redirect with no location'));
+              }
               return;
             }
-            resolve(destPath);
+
+            if (res.statusCode !== 200) {
+              reject(new Error(`Download failed: ${res.statusCode}`));
+              return;
+            }
+
+            const chunks: Buffer[] = [];
+            res.on('data', (chunk: Buffer) => chunks.push(chunk));
+            res.on('end', () => {
+              resolve(Buffer.concat(chunks));
+            });
           });
+
+          req.setTimeout(30000, () => {
+            req.destroy();
+            reject(new Error('Download timeout'));
+          });
+
+          req.on('error', reject);
+          req.end();
         });
 
-        req.on('error', reject);
+      return followRedirect(url, 0).then((data) => {
+        writeFileSync(destPath, data);
+        chmodSync(destPath, 0o755);
+        const hash = createHash('sha256').update(data).digest('hex');
+        if (hash !== config.checksum) {
+          unlinkSync(destPath);
+          throw new Error(
+            `Checksum mismatch: expected ${config.checksum}, got ${hash}`,
+          );
+        }
+        return destPath;
       });
     },
 
-    spawn(args: string[]): ChildProcess {
-      return spawn(config.binaryName, args, {
+    spawn(binaryPath: string, args: string[]): ChildProcess {
+      return spawn(binaryPath, args, {
         stdio: ['pipe', 'pipe', 'pipe'],
       });
     },
