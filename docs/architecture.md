@@ -131,12 +131,12 @@ Model IDs are resolved to plugins using a prefix-based routing system:
 
 ### Routing Table
 
-| Model ID | Prefix | Target Plugin | Model Passed to Plugin |
-|----------|--------|---------------|------------------------|
-| `cursor/composer-2` | `cursor` | `@llm-bridge/cursor` | `composer-2` |
-| `copilot/gpt-4o-copilot` | `copilot` | `@llm-bridge/copilot` | `gpt-4o-copilot` |
-| `windsurf/claude-4.5-sonnet` | `windsurf` | `@llm-bridge/windsurf` | `claude-4.5-sonnet` |
-| `composer-2` | (none) | `defaultPlugin` | `composer-2` |
+| Model ID                     | Prefix     | Target Plugin          | Model Passed to Plugin |
+| ---------------------------- | ---------- | ---------------------- | ---------------------- |
+| `cursor/composer-2`          | `cursor`   | `@llm-bridge/cursor`   | `composer-2`           |
+| `copilot/gpt-4o-copilot`     | `copilot`  | `@llm-bridge/copilot`  | `gpt-4o-copilot`       |
+| `windsurf/claude-4.5-sonnet` | `windsurf` | `@llm-bridge/windsurf` | `claude-4.5-sonnet`    |
+| `composer-2`                 | (none)     | `defaultPlugin`        | `composer-2`           |
 
 ### Model Listing
 

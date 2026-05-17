@@ -61,9 +61,7 @@ export async function initCommand(): Promise<void> {
       break;
     }
 
-    const input = await ask(
-      `Provider to configure (${available.join(', ')}, or 'skip'): `,
-    );
+    const input = await ask(`Provider to configure (${available.join(', ')}, or 'skip'): `);
 
     if (input === 'skip' || !PROVIDERS.includes(input as Provider)) {
       break;

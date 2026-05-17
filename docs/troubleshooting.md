@@ -68,7 +68,7 @@ Run `llm-bridge init` to set up a provider, or add credentials to `~/.config/llm
 **`/v1/models` returns empty list**
 
 ```json
-{"data": []}
+{ "data": [] }
 ```
 
 - No plugins are registered — all plugin credentials are missing or failed authentication

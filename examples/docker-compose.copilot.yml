@@ -3,7 +3,7 @@ services:
     image: ghcr.io/aeswibon/llm-bridge:latest
     container_name: llm-bridge-copilot
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     restart: unless-stopped
