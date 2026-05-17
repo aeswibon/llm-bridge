@@ -9,9 +9,19 @@
         "baseURL": "http://127.0.0.1:3849/v1"
       },
       "models": {
-        "composer-2": { "name": "Composer 2" }
+        "composer-2": {
+          "name": "Cursor Composer 2",
+          "label": "Cursor"
+        },
+        "gpt-4o-copilot": {
+          "name": "GPT-4o (Copilot)",
+          "label": "Copilot"
+        },
+        "claude-4.5-sonnet": {
+          "name": "Claude 4.5 Sonnet (Windsurf)",
+          "label": "Windsurf"
+        }
       }
     }
-  },
-  "model": "llm-bridge/composer-2"
+  }
 }

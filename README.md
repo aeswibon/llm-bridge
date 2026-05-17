@@ -22,7 +22,7 @@
 
 ## What is llm-bridge?
 
-llm-bridge is a local HTTP server that translates **OpenAI-compatible API requests** into provider-specific calls. It lets you use models from AI IDEs (Cursor, Windsurf, Copilot, etc.) from any OpenAI-format client — [OpenCode](https://opncd.ai), Continue, custom apps, or anything else.
+llm-bridge is a local HTTP server that translates **OpenAI-compatible API requests** into provider-specific calls. It lets you use models from 3 AI IDEs — Cursor, GitHub Copilot, and Windsurf — from any OpenAI-format client: [OpenCode](https://opencode.ai), Continue, custom apps, or anything else.
 
 ```
 Your Client ──POST /v1/chat/completions──► llm-bridge ──► Provider API
@@ -49,6 +49,8 @@ docker run -d \
   --name llm-bridge \
   -p 3849:3849 \
   -e CURSOR_API_KEY=cursor_your_key \
+  -e GITHUB_TOKEN=your_github_token \
+  -e WINDSURF_TOKEN=your_windsurf_token \
   ghcr.io/aeswibon/llm-bridge:latest
 ```
 
@@ -84,32 +86,38 @@ That's it. Your client now has access to Cursor's model catalog.
 | **Plugin architecture** | Add new providers with a simple interface       | ✅     |
 | **OpenAI-compatible**   | Works with any OpenAI-format client             | ✅     |
 | **macOS daemon**        | Auto-starts at login via LaunchAgent            | ✅     |
-| **Linux systemd**       | Auto-starts via systemd service                 | 🚧     |
+| **Windsurf support**    | Claude, GPT, Gemini models via local daemon     | ✅     |
+| **Copilot support**     | GitHub Copilot models                           | ✅     |
+| **OAuth support**       | Device flow authentication                      | ✅     |
 | **MCP server**          | Manage the bridge from inside Cursor IDE        | ✅     |
 | **Docker ready**        | Official images on GitHub Container Registry    | ✅     |
 | **Homebrew tap**        | One-line install on macOS                       | ✅     |
 | **Binary releases**     | Pre-built for macOS arm64/x64, Linux x64        | ✅     |
+| **Linux systemd**       | Auto-starts via systemd service                 | 🚧     |
 
 ## Supported Providers
 
-| Provider                     | Package                | Status      |
-| ---------------------------- | ---------------------- | ----------- |
-| [Cursor](https://cursor.com) | `@llm-bridge/cursor`   | ✅ Built-in |
-| GitHub Copilot               | `@llm-bridge/copilot`  | 🚧 Planned  |
-| Windsurf                     | `@llm-bridge/windsurf` | 🚧 Planned  |
+| Provider                     | Package                | Type   | Status      |
+| ---------------------------- | ---------------------- | ------ | ----------- |
+| [Cursor](https://cursor.com) | `@llm-bridge/cursor`   | HTTP   | ✅ Built-in |
+| GitHub Copilot               | `@llm-bridge/copilot`  | HTTP   | ✅ Built-in |
+| [Windsurf](https://windsurf.com) | `@llm-bridge/windsurf` | Daemon | ✅ Built-in |
 
 Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
 ## Architecture
 
-llm-bridge is a **monorepo** with four packages:
+llm-bridge is a **monorepo** with seven packages:
 
 | Package              | Description                                                                   |
 | -------------------- | ----------------------------------------------------------------------------- |
-| `@llm-bridge/core`   | HTTP server, plugin registry, session management, request/response formatting |
-| `@llm-bridge/cursor` | Cursor SDK plugin — the reference implementation                              |
-| `@llm-bridge/mcp`    | MCP server for Cursor IDE integration                                         |
-| `llm-bridge`         | CLI — setup wizard, server launcher, config injector, diagnostics             |
+| `@llm-bridge/core`   | HTTP server, plugin registry, session management, daemon abstraction, request/response formatting |
+| `@llm-bridge/cursor` | Cursor SDK plugin — HTTP-based reference implementation                       |
+| `@llm-bridge/copilot`| GitHub Copilot plugin — HTTP-based implementation                             |
+| `@llm-bridge/windsurf`| Windsurf plugin — daemon-based (stdio/JSON-RPC) implementation               |
+| `@llm-bridge/oauth`  | OAuth 2.0 device flow authentication helper                                   |
+| `@llm-bridge/mcp`    | MCP server for AI IDE integration                                             |
+| `llm-bridge`         | CLI — setup wizard, server launcher, daemon management, config injector, diagnostics |
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -144,6 +152,9 @@ Environment variables override config file values: `LLM_BRIDGE_PORT`, `LLM_BRIDG
 | `llm-bridge doctor`           | Run diagnostics                      |
 | `llm-bridge install-daemon`   | Install macOS LaunchAgent            |
 | `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent             |
+| `llm-bridge daemon status`    | Check daemon binary status (Windsurf)|
+| `llm-bridge daemon download`  | Download daemon binary (Windsurf)    |
+| `llm-bridge daemon locate`    | Find daemon binary path (Windsurf)   |
 
 ## Adding a Provider
 
@@ -169,11 +180,14 @@ pnpm test
 ```
 llm-bridge/
 ├── packages/
-│   ├── core/           # @llm-bridge/core
-│   ├── cursor/         # @llm-bridge/cursor
-│   └── mcp/            # @llm-bridge/mcp
+│   ├── core/           # @llm-bridge/core (HTTP server, daemon abstraction)
+│   ├── cursor/         # @llm-bridge/cursor (HTTP plugin)
+│   ├── copilot/        # @llm-bridge/copilot (HTTP plugin)
+│   ├── windsurf/       # @llm-bridge/windsurf (daemon plugin)
+│   ├── oauth/          # @llm-bridge/oauth (OAuth 2.0 helper)
+│   └── mcp/            # @llm-bridge/mcp (MCP server)
 ├── cli/                # llm-bridge CLI
-├── docs/               # Architecture, plugin dev guide, troubleshooting
+├── docs/               # Architecture, plugin dev, troubleshooting, getting started
 ├── examples/           # OpenCode config, docker-compose
 └── .github/            # Workflows, issue templates, homebrew tap
 ```
@@ -189,8 +203,8 @@ Run `llm-bridge doctor` for a full diagnostic check.
 See [ROADMAP.md](ROADMAP.md) for the full development plan.
 
 - **Phase 1** ✅ — Core framework, Cursor plugin, CLI, docs, CI/CD, Docker, Homebrew, releases
-- **Phase 2** 🚧 — Copilot/Windsurf plugins, OAuth, Linux/Windows daemons
-- **Phase 3** 🔮 — Plugin marketplace, enterprise features, multi-language SDKs
+- **Phase 2** ✅ — Copilot/Windsurf plugins, OAuth, daemon architecture
+- **Phase 3** 🔮 — Plugin marketplace, enterprise features, multi-language SDKs, Linux/Windows daemons
 
 ## Contributing
 

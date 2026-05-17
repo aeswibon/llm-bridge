@@ -12,18 +12,21 @@ llm-bridge is a local HTTP server that translates OpenAI-compatible API requests
 │  (or any     │                                   │   HTTP Server    │
 │   client)    │ ◄──────────────────────────────── │   (port 3849)    │
 └─────────────┘      SSE stream / JSON response    └────────┬─────────┘
-                                                            │
-                                                   Plugin Router
-                                                            │
-                                                   ┌────────▼─────────┐
-                                                   │  Cursor Plugin   │
-                                                   │  (@cursor/sdk)   │
-                                                   └────────┬─────────┘
-                                                            │
-                                                   ┌────────▼─────────┐
-                                                   │  Cursor API      │
-                                                   │  (cloud agents)  │
-                                                   └──────────────────┘
+                                                             │
+                                                    Plugin Router
+                                                             │
+                          ┌──────────────────────────────────┼──────────────────────────────────┐
+                          │                                  │                                  │
+                   ┌──────▼──────┐                    ┌──────▼──────┐                    ┌──────▼──────┐
+                   │  Cursor      │                    │  Copilot     │                    │  Windsurf    │
+                   │  (HTTP)      │                    │  (HTTP)      │                    │  (Daemon)    │
+                   └──────┬──────┘                    └──────┬──────┘                    └──────┬──────┘
+                          │                                  │                                  │
+                   ┌──────▼──────┐                    ┌──────▼──────┐                    ┌──────▼──────┐
+                   │ Cursor API  │                    │ Copilot API │                    │ Language    │
+                   │ (cloud)     │                    │ (cloud)     │                    │ Server      │
+                   └─────────────┘                    └─────────────┘                    │ (stdio)     │
+                                                                                        └─────────────┘
 ```
 
 ## Components
@@ -49,6 +52,38 @@ Each provider is a separate package implementing `BridgePlugin`:
 
 The Cursor plugin (`@llm-bridge/cursor`) is the reference implementation using `@cursor/sdk`.
 
+## Plugin Patterns
+
+llm-bridge supports two plugin patterns:
+
+### HTTP-based Plugins
+
+Plugins that communicate with cloud APIs via HTTP requests. Examples: Cursor, Copilot.
+
+```
+Plugin ──HTTP POST──► Cloud API ──SSE Stream──► Plugin ──StreamChunk──► Server
+```
+
+- Implement `BridgePlugin` interface directly
+- Session uses HTTP streaming to receive responses
+- Auth via API keys or OAuth tokens
+
+### Daemon-based Plugins
+
+Plugins that spawn a local daemon binary and communicate via stdio/JSON-RPC. Example: Windsurf.
+
+```
+Server ──spawn()──► Daemon Process
+         ──stdin──► JSON-RPC request
+         ◄─stdout── JSON-RPC response (chunks)
+         ──kill()──► Daemon cleanup
+```
+
+- Uses `DaemonManager` for binary discovery (`locate()`), download (`download()`), and process management (`spawn()`)
+- Uses `DaemonBridgeSession` for stdio/JSON-RPC communication
+- Binary discovery order: env var → known paths → `~/.llm-bridge/daemons/`
+- JSON-RPC 2.0 protocol: `chat/completions` request, `chat/chunk`/`chat/done` responses
+
 ### CLI (`llm-bridge`)
 
 Command-line interface for setup and management:
@@ -58,6 +93,7 @@ Command-line interface for setup and management:
 - `configure` — Inject OpenCode provider config
 - `doctor` — Run diagnostics
 - `install-daemon` / `uninstall-daemon` — macOS LaunchAgent management
+- `daemon status` / `daemon download` / `daemon locate` — Windsurf daemon management
 
 ### MCP Server (`@llm-bridge/mcp`)
 
