@@ -67,6 +67,7 @@ describe('E2E integration test', () => {
     server = new BridgeServer({ port: 0, host: '127.0.0.1' });
     server.registerPlugin(new MockPlugin());
     server.setActivePlugin('mock');
+    server.setDefaultPlugin('mock');
     await server.start();
     const address = server.address();
     baseUrl = `http://127.0.0.1:${(address as any).port}`;
@@ -86,7 +87,7 @@ describe('E2E integration test', () => {
     const res = await fetchJson(`${baseUrl}/v1/models`);
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].id).toBe('mock-model');
+    expect(res.body.data[0].id).toBe('mock/mock-model');
   });
 
   it('completes chat request (non-streaming)', async () => {

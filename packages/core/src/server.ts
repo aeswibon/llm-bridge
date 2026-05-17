@@ -72,25 +72,31 @@ export class BridgeServer {
   }
 
   private async handleModels(_req: IncomingMessage, res: http.ServerResponse): Promise<void> {
-    const plugin = this.registry.getActivePlugin();
-    if (!plugin) {
+    const allPlugins = this.registry.listPlugins();
+    if (allPlugins.length === 0) {
       this.jsonResponse(res, 503, {
-        error: { message: 'No active plugin configured', type: 'configuration_error' },
+        error: { message: 'No plugins configured', type: 'configuration_error' },
       });
       return;
     }
 
     try {
-      const config = this.config.plugins[plugin.name] ?? {};
-      const models = await plugin.listModels(config);
+      const models: any[] = [];
+      for (const plugin of allPlugins) {
+        const config = this.config.plugins[plugin.name] ?? {};
+        const pluginModels = await plugin.listModels(config);
+        for (const m of pluginModels) {
+          models.push({
+            id: `${plugin.name}/${m.id}`,
+            object: 'model',
+            created: Math.floor(Date.now() / 1000),
+            owned_by: plugin.name,
+          });
+        }
+      }
       this.jsonResponse(res, 200, {
         object: 'list',
-        data: models.map((m) => ({
-          id: m.id,
-          object: 'model',
-          created: Math.floor(Date.now() / 1000),
-          owned_by: plugin.name,
-        })),
+        data: models,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -98,18 +104,21 @@ export class BridgeServer {
     }
   }
 
+  private resolvePlugin(model: string): { plugin: BridgePlugin | null; error: string | null } {
+    const slashIndex = model.indexOf('/');
+    if (slashIndex !== -1) {
+      const prefix = model.slice(0, slashIndex);
+      const plugin = this.registry.getPlugin(prefix);
+      if (plugin) return { plugin, error: null };
+      return { plugin: null, error: `Unknown plugin: "${prefix}"` };
+    }
+    return { plugin: this.registry.getDefaultPlugin(), error: null };
+  }
+
   private async handleChatCompletions(
     req: IncomingMessage,
     res: http.ServerResponse,
   ): Promise<void> {
-    const plugin = this.registry.getActivePlugin();
-    if (!plugin) {
-      this.jsonResponse(res, 503, {
-        error: { message: 'No active plugin configured', type: 'configuration_error' },
-      });
-      return;
-    }
-
     const parsed = await parseChatRequest(req);
     if (!parsed.success) {
       this.jsonResponse(res, 400, {
@@ -119,6 +128,21 @@ export class BridgeServer {
     }
 
     const { messages, model, stream, tools } = parsed.data;
+    const { plugin, error } = this.resolvePlugin(model);
+
+    if (error) {
+      this.jsonResponse(res, 400, {
+        error: { message: error, type: 'invalid_request_error' },
+      });
+      return;
+    }
+
+    if (!plugin) {
+      this.jsonResponse(res, 503, {
+        error: { message: 'No default plugin configured', type: 'configuration_error' },
+      });
+      return;
+    }
 
     try {
       const config = this.config.plugins[plugin.name] ?? {};
@@ -177,5 +201,9 @@ export class BridgeServer {
 
   setActivePlugin(name: string): void {
     this.registry.setActive(name);
+  }
+
+  setDefaultPlugin(name: string): void {
+    this.registry.setDefault(name);
   }
 }
