@@ -11,6 +11,8 @@ export function writeConfig(config: BridgeConfig): void {
 export function setPluginConfig(pluginName: string, envVars: Record<string, string>): void {
   const config = readConfig();
   config.plugins[pluginName] = { ...config.plugins[pluginName], ...envVars };
-  config.activePlugin = pluginName;
+  if (!config.defaultPlugin) {
+    config.defaultPlugin = pluginName;
+  }
   writeConfig(config);
 }
