@@ -1,6 +1,6 @@
 {
   "name": "llm-bridge",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "type": "module",
   "bin": {
     "llm-bridge": "./dist/index.js"
@@ -16,7 +16,8 @@
   "dependencies": {
     "@llm-bridge/copilot": "workspace:*",
     "@llm-bridge/core": "workspace:*",
-    "@llm-bridge/cursor": "workspace:*"
+    "@llm-bridge/cursor": "workspace:*",
+    "@llm-bridge/windsurf": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

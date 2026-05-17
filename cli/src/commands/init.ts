@@ -1,6 +1,44 @@
-import { setPluginConfig, writeConfig } from '../utils/config.js';
+import { setPluginConfig, writeConfig, readConfig } from '../utils/config.js';
 import { CursorBridgePlugin } from '@llm-bridge/cursor';
+import { CopilotBridgePlugin } from '@llm-bridge/copilot';
+import { WindsurfBridgePlugin } from '@llm-bridge/windsurf';
 import { createInterface } from 'node:readline';
+
+const PROVIDERS = ['cursor', 'copilot', 'windsurf'] as const;
+type Provider = (typeof PROVIDERS)[number];
+
+async function getProviderPlugin(provider: Provider) {
+  switch (provider) {
+    case 'cursor':
+      return new CursorBridgePlugin();
+    case 'copilot':
+      return new CopilotBridgePlugin();
+    case 'windsurf':
+      return new WindsurfBridgePlugin();
+  }
+}
+
+function getCredentialPrompt(provider: Provider): string {
+  switch (provider) {
+    case 'cursor':
+      return 'Enter your CURSOR_API_KEY: ';
+    case 'copilot':
+      return 'Enter your GITHUB_TOKEN: ';
+    case 'windsurf':
+      return 'Enter your WINDSURF_TOKEN: ';
+  }
+}
+
+function getEnvVar(provider: Provider): string {
+  switch (provider) {
+    case 'cursor':
+      return 'CURSOR_API_KEY';
+    case 'copilot':
+      return 'GITHUB_TOKEN';
+    case 'windsurf':
+      return 'WINDSURF_TOKEN';
+  }
+}
 
 export async function initCommand(): Promise<void> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -8,36 +46,61 @@ export async function initCommand(): Promise<void> {
 
   console.log('llm-bridge setup wizard\n');
 
-  const provider = (await ask(`Provider (default: cursor): `)) || 'cursor';
-
-  if (provider === 'cursor') {
-    const apiKey = await ask('Enter your CURSOR_API_KEY: ');
-    if (!apiKey) {
-      console.error('API key is required.');
-      rl.close();
-      process.exit(1);
-    }
-
-    setPluginConfig('cursor', { CURSOR_API_KEY: apiKey });
-
-    const plugin = new CursorBridgePlugin();
-    const valid = await plugin.authenticate({ CURSOR_API_KEY: apiKey });
-    if (!valid) {
-      console.error('Invalid API key. Please check and try again.');
-      rl.close();
-      process.exit(1);
-    }
-    console.log('API key validated successfully.');
+  const existingConfig = readConfig();
+  const configuredProviders = Object.keys(existingConfig.plugins || {});
+  if (configuredProviders.length > 0) {
+    console.log(`Already configured: ${configuredProviders.join(', ')}\n`);
   }
 
-  writeConfig({
-    activePlugin: provider,
-    port: 3849,
-    host: '127.0.0.1',
-    plugins: {},
-    sessionTTL: 1800,
-    toolMode: 'lenient',
-  });
+  let firstProvider: Provider | null = null;
+
+  while (true) {
+    const available = PROVIDERS.filter((p) => !configuredProviders.includes(p));
+    if (available.length === 0) {
+      console.log('All providers already configured.');
+      break;
+    }
+
+    const input = await ask(`Provider to configure (${available.join(', ')}, or 'skip'): `);
+
+    if (input === 'skip' || !PROVIDERS.includes(input as Provider)) {
+      break;
+    }
+
+    const provider = input as Provider;
+
+    const envVar = getEnvVar(provider);
+    const credential = await ask(getCredentialPrompt(provider));
+    if (!credential) {
+      console.error('Credential is required.');
+      continue;
+    }
+
+    const plugin = await getProviderPlugin(provider);
+    const valid = await plugin.authenticate({ [envVar]: credential });
+    if (!valid) {
+      console.error('Authentication failed. Please check your credential and try again.');
+      continue;
+    }
+    console.log(`Authentication successful for ${provider}.`);
+
+    setPluginConfig(provider, { [envVar]: credential });
+    configuredProviders.push(provider);
+
+    if (!firstProvider) {
+      firstProvider = provider;
+    }
+
+    const more = await ask('Configure another provider? (y/n): ');
+    if (more.toLowerCase() !== 'y') break;
+  }
+
+  const config = readConfig();
+  if (!config.defaultPlugin && firstProvider) {
+    config.defaultPlugin = firstProvider;
+    writeConfig(config);
+  }
+
   console.log(`\nConfig saved. Run 'llm-bridge start' to launch.`);
   rl.close();
 }

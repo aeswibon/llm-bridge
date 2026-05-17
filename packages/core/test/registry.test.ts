@@ -73,4 +73,26 @@ describe('PluginRegistry', () => {
     expect(health?.healthy).toBe(false);
     expect(health?.error).toBe('connection failed');
   });
+
+  it('sets default plugin for fallback routing', () => {
+    const registry = new PluginRegistry();
+    registry.register(mockPlugin('cursor'));
+    registry.register(mockPlugin('windsurf'));
+    registry.setDefault('cursor');
+    expect(registry.getDefaultPlugin()?.name).toBe('cursor');
+  });
+
+  it('returns null when no default plugin is set', () => {
+    const registry = new PluginRegistry();
+    registry.register(mockPlugin('cursor'));
+    expect(registry.getDefaultPlugin()).toBeNull();
+  });
+
+  it('throws when setting default to unregistered plugin', () => {
+    const registry = new PluginRegistry();
+    registry.register(mockPlugin('cursor'));
+    expect(() => registry.setDefault('nonexistent')).toThrow(
+      'Plugin "nonexistent" is not registered',
+    );
+  });
 });

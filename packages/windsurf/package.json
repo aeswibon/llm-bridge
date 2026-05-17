@@ -1,11 +1,12 @@
 {
-  "name": "@llm-bridge/mcp",
+  "name": "@llm-bridge/windsurf",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "llm-bridge-mcp": "./dist/server.js"
+  "exports": {
+    ".": "./dist/index.js",
+    "./daemon.js": "./dist/daemon.js"
   },
   "scripts": {
     "build": "tsc",
@@ -15,8 +16,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^3.25.76"
+    "@llm-bridge/core": "workspace:*",
+    "@llm-bridge/oauth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
