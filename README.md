@@ -25,9 +25,9 @@
 llm-bridge is a local HTTP server that translates **OpenAI-compatible API requests** into provider-specific calls. It lets you use models from 3 AI IDEs — Cursor, GitHub Copilot, and Windsurf — from any OpenAI-format client: [OpenCode](https://opencode.ai), Continue, custom apps, or anything else.
 
 ```
-Your Client ──POST /v1/chat/completions──► llm-bridge ──► Provider API
+Your Client ──POST /v1/chat/completions──► llm-bridge ──► ProviderAPI
 (OpenCode,                                (port 3849)   (Cursor, Copilot,
- Continue, etc.)                                       Windsurf, etc.)
+ Continue, etc.)                                        Windsurf, etc.)
                 ◄── SSE / JSON response ──◄
 ```
 
@@ -40,6 +40,25 @@ npm install -g llm-bridge
 llm-bridge init      # Interactive setup wizard
 llm-bridge start     # Launch the bridge server
 llm-bridge configure # Inject provider config into OpenCode
+```
+
+### Multi-Provider Setup
+
+```bash
+# Set credentials for all providers
+export CURSOR_API_KEY=cursor_your_key
+export GITHUB_TOKEN=your_github_token
+export WINDSURF_TOKEN=your_windsurf_token
+
+llm-bridge start
+```
+
+All three providers are now active. Use prefixed model IDs:
+
+```json
+{
+  "model": "cursor/composer-2"
+}
 ```
 
 ### Docker
@@ -75,7 +94,7 @@ chmod +x llm-bridge
 ./llm-bridge start
 ```
 
-That's it. Your client now has access to Cursor's model catalog.
+That's it. Your client now has access to all three provider model catalogs.
 
 ## Features
 
@@ -85,6 +104,7 @@ That's it. Your client now has access to Cursor's model catalog.
 | **Full feature parity** | Tool calls, multi-turn conversations, streaming | ✅     |
 | **Plugin architecture** | Add new providers with a simple interface       | ✅     |
 | **OpenAI-compatible**   | Works with any OpenAI-format client             | ✅     |
+| **Multi-provider**      | Route to Cursor, Copilot, or Windsurf by prefix | ✅     |
 | **macOS daemon**        | Auto-starts at login via LaunchAgent            | ✅     |
 | **Windsurf support**    | Claude, GPT, Gemini models via local daemon     | ✅     |
 | **Copilot support**     | GitHub Copilot models                           | ✅     |
@@ -104,6 +124,18 @@ That's it. Your client now has access to Cursor's model catalog.
 | [Windsurf](https://windsurf.com) | `@llm-bridge/windsurf` | Daemon | ✅ Built-in |
 
 Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Getting Started](docs/getting-started.md) | Installation, quick start, configuration |
+| [Architecture](docs/architecture.md) | System design, model routing, data flow |
+| [CLI Reference](docs/cli-reference.md) | All CLI commands and options |
+| [Configuration](docs/configuration.md) | Config file format, environment variables |
+| [Deployment](docs/deployment.md) | Production deployment guides |
+| [Plugin Development](docs/plugin-development.md) | Build your own provider plugin |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
 
 ## Architecture
 
@@ -127,12 +159,18 @@ Config lives in `~/.config/llm-bridge/config.json`:
 
 ```json
 {
-  "activePlugin": "cursor",
+  "defaultPlugin": "cursor",
   "port": 3849,
   "host": "127.0.0.1",
   "plugins": {
     "cursor": {
       "CURSOR_API_KEY": "cursor_..."
+    },
+    "copilot": {
+      "GITHUB_TOKEN": "ghp_..."
+    },
+    "windsurf": {
+      "WINDSURF_TOKEN": "windsurf_..."
     }
   },
   "sessionTTL": 1800,
@@ -141,6 +179,8 @@ Config lives in `~/.config/llm-bridge/config.json`:
 ```
 
 Environment variables override config file values: `LLM_BRIDGE_PORT`, `LLM_BRIDGE_HOST`, `LLM_BRIDGE_CONFIG`.
+
+See [docs/configuration.md](docs/configuration.md) for the full reference.
 
 ## CLI Commands
 
@@ -155,6 +195,8 @@ Environment variables override config file values: `LLM_BRIDGE_PORT`, `LLM_BRIDG
 | `llm-bridge daemon status`    | Check daemon binary status (Windsurf)|
 | `llm-bridge daemon download`  | Download daemon binary (Windsurf)    |
 | `llm-bridge daemon locate`    | Find daemon binary path (Windsurf)   |
+
+See [docs/cli-reference.md](docs/cli-reference.md) for the complete reference.
 
 ## Adding a Provider
 
@@ -202,7 +244,7 @@ Run `llm-bridge doctor` for a full diagnostic check.
 
 See [ROADMAP.md](ROADMAP.md) for the full development plan.
 
-- **Phase 1** ✅ — Core framework, Cursor plugin, CLI, docs, CI/CD, Docker, Homebrew, releases
+- **Phase 1** ✅ — Core framework, Cursor plugin, CLI, docs, CI/CD, Docker, Homebrew, releases, npm publish, landing page
 - **Phase 2** ✅ — Copilot/Windsurf plugins, OAuth, daemon architecture
 - **Phase 3** 🔮 — Plugin marketplace, enterprise features, multi-language SDKs, Linux/Windows daemons
 

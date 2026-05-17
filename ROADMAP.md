@@ -1,6 +1,6 @@
 # Roadmap
 
-## Phase 1 — Current
+## Phase 1 — Foundation
 
 - [x] Monorepo structure
 - [x] Core HTTP server
@@ -11,18 +11,21 @@
 - [x] npm publish
 - [x] Landing page
 
-## Phase 2 — Community
+## Phase 2 — Multi-Provider
 
 - [x] Copilot plugin
 - [x] Windsurf plugin
 - [x] OAuth support (device flow)
 - [x] Daemon architecture (DaemonManager + DaemonBridgeSession)
-- [ ] Linux systemd daemon
-- [ ] Windows service wrapper
-- [ ] Plugin registry website
+- [x] Multi-plugin routing with prefix resolution
+- [x] MCP server for IDE integration
+- [x] v1.0.0 release
 
 ## Phase 3 — Ecosystem
 
 - [ ] Plugin marketplace
 - [ ] Enterprise features (proxy, audit logging, rate limiting)
 - [ ] Multi-language SDK (Python, Go)
+- [ ] Linux systemd daemon
+- [ ] Windows service wrapper
+- [ ] Plugin registry website

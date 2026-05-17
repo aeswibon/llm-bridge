@@ -297,19 +297,58 @@ describe('MyBridgePlugin', () => {
 
 ## Registering in CLI
 
-Add the plugin to `cli/src/commands/start.ts`:
+Add the plugin to `cli/src/commands/start.ts`. Multiple plugins can be registered simultaneously:
 
 ```typescript
+import { CursorPlugin } from '@llm-bridge/cursor';
+import { CopilotPlugin } from '@llm-bridge/copilot';
+import { WindsurfPlugin } from '@llm-bridge/windsurf';
 import { MyBridgePlugin } from '@llm-bridge/my-provider';
 
 // In startCommand():
-if (config.activePlugin === 'my-provider') {
-  const plugin = new MyBridgePlugin();
+const plugins = [
+  new CursorPlugin(),
+  new CopilotPlugin(),
+  new WindsurfPlugin(),
+  new MyBridgePlugin(),
+];
+
+for (const plugin of plugins) {
   server.registerPlugin(plugin);
-  server.setActivePlugin('my-provider');
-  console.error(`[llm-bridge] active plugin: my-provider`);
+}
+
+// Set the default plugin for unprefixed model routing
+if (config.defaultPlugin || config.activePlugin) {
+  server.setDefaultPlugin(config.defaultPlugin ?? config.activePlugin);
+}
+
+console.error(`[llm-bridge] registered ${plugins.length} plugins`);
+```
+
+## Model Prefixing
+
+When a plugin is registered, its `name` property automatically becomes the model ID prefix. For example:
+
+```typescript
+export class MyBridgePlugin implements BridgePlugin {
+  name = 'my-provider';  // ← This becomes the prefix
+  // ...
 }
 ```
+
+Models from this plugin will be exposed as:
+- `my-provider/model-1`
+- `my-provider/model-2`
+
+Clients must use the prefixed ID when making requests:
+
+```json
+{
+  "model": "my-provider/model-1"
+}
+```
+
+The prefix is stripped before the model ID is passed to the plugin's `createSession()` method, so the plugin only sees `model-1`.
 
 ## Publishing
 
