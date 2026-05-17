@@ -2,6 +2,7 @@ import type { OAuthConfig, StoredToken, TokenStore } from './types.js';
 
 export interface TokenLifecycleOptions {
   gracePeriodMs?: number;
+  config?: OAuthConfig;
 }
 
 export class TokenLifecycle {
@@ -11,10 +12,9 @@ export class TokenLifecycle {
   constructor(
     private store: TokenStore,
     options: TokenLifecycleOptions = {},
-    config?: OAuthConfig,
   ) {
     this.gracePeriodMs = options.gracePeriodMs ?? 0;
-    this.config = config;
+    this.config = options.config;
   }
 
   async isValid(provider: string): Promise<boolean> {
@@ -53,6 +53,11 @@ export class TokenLifecycle {
     }
 
     const data = await response.json() as Record<string, unknown>;
+
+    if (!data.access_token) {
+      throw new Error('Invalid token response: missing access_token');
+    }
+
     const newToken: StoredToken = {
       version: 1,
       accessToken: data.access_token as string,

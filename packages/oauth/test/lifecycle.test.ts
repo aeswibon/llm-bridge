@@ -100,7 +100,7 @@ describe('TokenLifecycle', () => {
       } as Response);
 
       const config: OAuthConfig = { provider: testProvider, store };
-      const lifecycleWithConfig = new TokenLifecycle(store, {}, config);
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
       const refreshed = await lifecycleWithConfig.refresh('test');
 
       expect(refreshed.accessToken).toBe('new-access');
@@ -121,9 +121,24 @@ describe('TokenLifecycle', () => {
       await store.set('test', noRefreshToken);
 
       const config: OAuthConfig = { provider: testProvider, store };
-      const lifecycleWithConfig = new TokenLifecycle(store, {}, config);
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
 
       await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('No refresh token available');
+    });
+
+    it('throws when OAuthConfig is not provided', async () => {
+      const existingToken: StoredToken = {
+        version: 1,
+        accessToken: 'old',
+        refreshToken: 'refresh',
+        expiresAt: Date.now() - 1000,
+        scopes: [],
+      };
+      await store.set('test', existingToken);
+
+      const lifecycleWithoutConfig = new TokenLifecycle(store);
+
+      await expect(lifecycleWithoutConfig.refresh('test')).rejects.toThrow('OAuthConfig required for token refresh');
     });
 
     it('calls onRefresh callback with new token', async () => {
@@ -144,7 +159,7 @@ describe('TokenLifecycle', () => {
       } as Response);
 
       const config: OAuthConfig = { provider: testProvider, store, onRefresh };
-      const lifecycleWithConfig = new TokenLifecycle(store, {}, config);
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
       await lifecycleWithConfig.refresh('test');
 
       expect(onRefresh).toHaveBeenCalledWith(expect.objectContaining({
@@ -169,9 +184,74 @@ describe('TokenLifecycle', () => {
       } as Response);
 
       const config: OAuthConfig = { provider: testProvider, store };
-      const lifecycleWithConfig = new TokenLifecycle(store, {}, config);
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
 
       await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('Token refresh failed: 400');
+    });
+
+    it('preserves refresh_token when server does not return a new one', async () => {
+      const existingToken: StoredToken = {
+        version: 1,
+        accessToken: 'old',
+        refreshToken: 'keep-this-refresh',
+        expiresAt: Date.now() - 1000,
+        scopes: ['read:user'],
+      };
+      await store.set('test', existingToken);
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'new-access', expires_in: 3600 }),
+      } as Response);
+
+      const config: OAuthConfig = { provider: testProvider, store };
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
+      const refreshed = await lifecycleWithConfig.refresh('test');
+
+      expect(refreshed.refreshToken).toBe('keep-this-refresh');
+    });
+
+    it('preserves scopes from the original token', async () => {
+      const existingToken: StoredToken = {
+        version: 1,
+        accessToken: 'old',
+        refreshToken: 'refresh',
+        expiresAt: Date.now() - 1000,
+        scopes: ['read:user', 'write:repo'],
+      };
+      await store.set('test', existingToken);
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'new', expires_in: 3600 }),
+      } as Response);
+
+      const config: OAuthConfig = { provider: testProvider, store };
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
+      const refreshed = await lifecycleWithConfig.refresh('test');
+
+      expect(refreshed.scopes).toEqual(['read:user', 'write:repo']);
+    });
+
+    it('throws if token response is missing access_token', async () => {
+      const existingToken: StoredToken = {
+        version: 1,
+        accessToken: 'old',
+        refreshToken: 'refresh',
+        expiresAt: Date.now() - 1000,
+        scopes: [],
+      };
+      await store.set('test', existingToken);
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ expires_in: 3600 }),
+      } as Response);
+
+      const config: OAuthConfig = { provider: testProvider, store };
+      const lifecycleWithConfig = new TokenLifecycle(store, { config });
+
+      await expect(lifecycleWithConfig.refresh('test')).rejects.toThrow('Invalid token response: missing access_token');
     });
   });
 });
