@@ -14,7 +14,7 @@ describe('config', () => {
 
   it('returns default config when no file exists', () => {
     const config = loadConfig();
-    expect(config.activePlugin).toBe('cursor');
+    expect(config.defaultPlugin).toBe('cursor');
     expect(config.port).toBe(3849);
   });
 
@@ -54,5 +54,54 @@ describe('config', () => {
     const config = loadConfig();
     expect(config.host).toBe('0.0.0.0');
     delete process.env.LLM_BRIDGE_HOST;
+  });
+
+  it('maps activePlugin to defaultPlugin for backward compatibility', () => {
+    const configDir = path.join(tmpDir, '.config', 'llm-bridge');
+    fs.mkdirSync(configDir, { recursive: true });
+    const configData = {
+      activePlugin: 'cursor',
+      port: 3849,
+      plugins: { cursor: { CURSOR_API_KEY: 'test' } },
+      host: '127.0.0.1',
+      sessionTTL: 1800,
+      toolMode: 'lenient' as const,
+    };
+    fs.writeFileSync(configPath(), JSON.stringify(configData));
+    const config = loadConfig();
+    expect(config.defaultPlugin).toBe('cursor');
+  });
+
+  it('uses defaultPlugin when set directly', () => {
+    const configDir = path.join(tmpDir, '.config', 'llm-bridge');
+    fs.mkdirSync(configDir, { recursive: true });
+    const configData = {
+      defaultPlugin: 'windsurf',
+      port: 3849,
+      plugins: { windsurf: { WINDSURF_TOKEN: 'test' } },
+      host: '127.0.0.1',
+      sessionTTL: 1800,
+      toolMode: 'lenient' as const,
+    };
+    fs.writeFileSync(configPath(), JSON.stringify(configData));
+    const config = loadConfig();
+    expect(config.defaultPlugin).toBe('windsurf');
+  });
+
+  it('prefers defaultPlugin over activePlugin when both set', () => {
+    const configDir = path.join(tmpDir, '.config', 'llm-bridge');
+    fs.mkdirSync(configDir, { recursive: true });
+    const configData = {
+      activePlugin: 'cursor',
+      defaultPlugin: 'copilot',
+      port: 3849,
+      plugins: {},
+      host: '127.0.0.1',
+      sessionTTL: 1800,
+      toolMode: 'lenient' as const,
+    };
+    fs.writeFileSync(configPath(), JSON.stringify(configData));
+    const config = loadConfig();
+    expect(config.defaultPlugin).toBe('copilot');
   });
 });

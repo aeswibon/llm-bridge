@@ -81,7 +81,8 @@ export interface PluginHealth {
 }
 
 export interface BridgeConfig {
-  activePlugin: string;
+  activePlugin?: string;
+  defaultPlugin: string;
   port: number;
   host: string;
   plugins: Record<string, Record<string, string>>;
@@ -90,7 +91,7 @@ export interface BridgeConfig {
 }
 
 export const DefaultConfig: BridgeConfig = {
-  activePlugin: 'cursor',
+  defaultPlugin: 'cursor',
   port: 3849,
   host: '127.0.0.1',
   plugins: {},

@@ -18,6 +18,12 @@ export function loadConfig(): BridgeConfig {
       const raw = fs.readFileSync(filePath, 'utf8');
       const fileConfig = JSON.parse(raw) as Partial<BridgeConfig>;
       const config = { ...DefaultConfig, ...fileConfig };
+
+      // Backward compatibility: activePlugin → defaultPlugin
+      if (fileConfig.activePlugin && !fileConfig.defaultPlugin) {
+        config.defaultPlugin = fileConfig.activePlugin;
+      }
+
       if (envPort) config.port = parseInt(envPort, 10);
       if (envHost) config.host = envHost;
       return config;
