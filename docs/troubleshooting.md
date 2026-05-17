@@ -14,13 +14,13 @@ Run `llm-bridge doctor` to confirm. Change port in `~/.config/llm-bridge/config.
 lsof -i :3849 -t | xargs kill
 ```
 
-**No active plugin configured**
+**No plugins configured**
 
 ```
 No active plugin configured
 ```
 
-Run `llm-bridge init` to set up a provider.
+Run `llm-bridge init` to set up a provider, or add credentials to `~/.config/llm-bridge/config.json` under `plugins`.
 
 **Unknown plugin**
 
@@ -28,8 +28,69 @@ Run `llm-bridge init` to set up a provider.
 [llm-bridge] warning: unknown plugin "xyz"
 ```
 
-- Check `activePlugin` in `~/.config/llm-bridge/config.json`
+- Check `defaultPlugin` (or `activePlugin`) in `~/.config/llm-bridge/config.json`
 - Valid values: `cursor`, `copilot`, `windsurf`
+
+## Multi-Plugin Routing Errors
+
+**Unknown model prefix**
+
+```
+[llm-bridge] error: unknown prefix "xyz" in model "xyz/some-model"
+```
+
+- Model IDs must use a valid provider prefix: `cursor/`, `copilot/`, or `windsurf/`
+- Example: use `cursor/composer-2` not just `composer-2`
+- Check your client's model configuration
+
+**No default plugin set**
+
+```
+[llm-bridge] error: no default plugin configured and model has no prefix
+```
+
+- When using unprefixed model IDs (e.g., `composer-2`), a `defaultPlugin` must be set in config
+- Set `"defaultPlugin": "cursor"` in `~/.config/llm-bridge/config.json`
+- Or use prefixed model IDs to route explicitly
+
+**Plugin not registered**
+
+```
+[llm-bridge] error: plugin "copilot" is not registered
+```
+
+- The plugin is configured but its credentials are missing or invalid
+- Check that the required env vars or config entries exist (e.g., `GITHUB_TOKEN` for copilot)
+- Run `llm-bridge doctor` to diagnose
+
+## Models Endpoint Issues
+
+**`/v1/models` returns empty list**
+
+```json
+{"data": []}
+```
+
+- No plugins are registered — all plugin credentials are missing or failed authentication
+- Check `~/.config/llm-bridge/config.json` for plugin entries under `plugins`
+- Verify environment variables are set: `CURSOR_API_KEY`, `GITHUB_TOKEN`, `WINDSURF_TOKEN`
+- Run `llm-bridge doctor` for a full diagnostic
+
+## Config Migration
+
+**`activePlugin` → `defaultPlugin`**
+
+In v1.0.0, `activePlugin` was renamed to `defaultPlugin`. The old key still works but is deprecated.
+
+```json
+// Old (deprecated)
+{ "activePlugin": "cursor" }
+
+// New (recommended)
+{ "defaultPlugin": "cursor" }
+```
+
+Update your config to use `defaultPlugin`. Both keys are currently supported for backward compatibility.
 
 ## Windsurf daemon issues
 
