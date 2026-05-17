@@ -5,7 +5,7 @@
 ### Option 1: npm (recommended)
 
 ```bash
-npm install -g llm-bridge
+npm install -g @ai-ide-bridge/cli
 ```
 
 ### Option 2: Homebrew (macOS)

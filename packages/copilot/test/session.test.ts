@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { CopilotBridgeSession } from '../src/session.js';
-import type { Message } from '@llm-bridge/core';
+import type { Message } from '@ai-ide-bridge/core';
 
 describe('CopilotBridgeSession', () => {
   let session: CopilotBridgeSession;

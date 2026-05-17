@@ -1,5 +1,5 @@
 {
-  "name": "@llm-bridge/oauth",
+  "name": "@ai-ide-bridge/oauth",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

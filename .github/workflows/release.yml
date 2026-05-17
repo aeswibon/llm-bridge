@@ -85,6 +85,21 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: npm publish --access public
+        working-directory: packages/copilot
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: npm publish --access public
+        working-directory: packages/windsurf
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: npm publish --access public
+        working-directory: packages/oauth
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: npm publish --access public
         working-directory: cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -183,7 +198,7 @@ jobs:
             ## npm
 
             ```bash
-            npm install -g llm-bridge@${{ steps.version.outputs.VERSION }}
+            npm install -g @ai-ide-bridge/cli@${{ steps.version.outputs.VERSION }}
             ```
           files: dist/*
           draft: false

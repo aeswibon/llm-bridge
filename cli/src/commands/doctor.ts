@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { readConfig } from '../utils/config.js';
 import fs from 'node:fs';
-import { configPath } from '@llm-bridge/core';
+import { configPath } from '@ai-ide-bridge/core';
 
 export async function doctorCommand(): Promise<void> {
   const config = readConfig();

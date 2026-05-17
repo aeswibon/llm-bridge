@@ -1,5 +1,5 @@
 {
-  "name": "llm-bridge",
+  "name": "@ai-ide-bridge/cli",
   "version": "1.0.0",
   "type": "module",
   "bin": {
@@ -14,10 +14,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@llm-bridge/copilot": "workspace:*",
-    "@llm-bridge/core": "workspace:*",
-    "@llm-bridge/cursor": "workspace:*",
-    "@llm-bridge/windsurf": "workspace:*"
+    "@ai-ide-bridge/copilot": "workspace:*",
+    "@ai-ide-bridge/core": "workspace:*",
+    "@ai-ide-bridge/cursor": "workspace:*",
+    "@ai-ide-bridge/windsurf": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

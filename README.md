@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/aeswibon/llm-bridge/actions/workflows/pr-build.yml"><img src="https://github.com/aeswibon/llm-bridge/actions/workflows/pr-build.yml/badge.svg" alt="PR Build"></a>
   <a href="https://github.com/aeswibon/llm-bridge/actions/workflows/release.yml"><img src="https://github.com/aeswibon/llm-bridge/actions/workflows/release.yml/badge.svg" alt="Release"></a>
-  <a href="https://www.npmjs.com/package/llm-bridge"><img src="https://img.shields.io/npm/v/llm-bridge?label=npm" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/@ai-ide-bridge/cli"><img src="https://img.shields.io/npm/v/@ai-ide-bridge/cli?label=npm" alt="npm"></a>
   <a href="https://github.com/aeswibon/llm-bridge/pkgs/container/llm-bridge"><img src="https://img.shields.io/badge/docker-ghcr.io-blue" alt="Docker"></a>
   <a href="https://github.com/aeswibon/llm-bridge/releases/latest"><img src="https://img.shields.io/github/v/release/aeswibon/llm-bridge?label=release" alt="GitHub Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
@@ -36,7 +36,7 @@ Your Client ──POST /v1/chat/completions──► llm-bridge ──► Provid
 ### npm
 
 ```bash
-npm install -g llm-bridge
+npm install -g @ai-ide-bridge/cli
 llm-bridge init      # Interactive setup wizard
 llm-bridge start     # Launch the bridge server
 llm-bridge configure # Inject provider config into OpenCode
@@ -117,11 +117,11 @@ That's it. Your client now has access to all three provider model catalogs.
 
 ## Supported Providers
 
-| Provider                         | Package                | Type   | Status      |
-| -------------------------------- | ---------------------- | ------ | ----------- |
-| [Cursor](https://cursor.com)     | `@llm-bridge/cursor`   | HTTP   | ✅ Built-in |
-| GitHub Copilot                   | `@llm-bridge/copilot`  | HTTP   | ✅ Built-in |
-| [Windsurf](https://windsurf.com) | `@llm-bridge/windsurf` | Daemon | ✅ Built-in |
+| Provider                         | Package                   | Type   | Status      |
+| -------------------------------- | ------------------------- | ------ | ----------- |
+| [Cursor](https://cursor.com)     | `@ai-ide-bridge/cursor`   | HTTP   | ✅ Built-in |
+| GitHub Copilot                   | `@ai-ide-bridge/copilot`  | HTTP   | ✅ Built-in |
+| [Windsurf](https://windsurf.com) | `@ai-ide-bridge/windsurf` | Daemon | ✅ Built-in |
 
 Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
@@ -141,15 +141,15 @@ Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
 llm-bridge is a **monorepo** with seven packages:
 
-| Package                | Description                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------- |
-| `@llm-bridge/core`     | HTTP server, plugin registry, session management, daemon abstraction, request/response formatting |
-| `@llm-bridge/cursor`   | Cursor SDK plugin — HTTP-based reference implementation                                           |
-| `@llm-bridge/copilot`  | GitHub Copilot plugin — HTTP-based implementation                                                 |
-| `@llm-bridge/windsurf` | Windsurf plugin — daemon-based (stdio/JSON-RPC) implementation                                    |
-| `@llm-bridge/oauth`    | OAuth 2.0 device flow authentication helper                                                       |
-| `@llm-bridge/mcp`      | MCP server for AI IDE integration                                                                 |
-| `llm-bridge`           | CLI — setup wizard, server launcher, daemon management, config injector, diagnostics              |
+| Package                   | Description                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `@ai-ide-bridge/core`     | HTTP server, plugin registry, session management, daemon abstraction, request/response formatting |
+| `@ai-ide-bridge/cursor`   | Cursor SDK plugin — HTTP-based reference implementation                                           |
+| `@ai-ide-bridge/copilot`  | GitHub Copilot plugin — HTTP-based implementation                                                 |
+| `@ai-ide-bridge/windsurf` | Windsurf plugin — daemon-based (stdio/JSON-RPC) implementation                                    |
+| `@ai-ide-bridge/oauth`    | OAuth 2.0 device flow authentication helper                                                       |
+| `@ai-ide-bridge/mcp`      | MCP server for AI IDE integration                                                                 |
+| `@ai-ide-bridge/cli`      | CLI — setup wizard, server launcher, daemon management, config injector, diagnostics              |
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -201,7 +201,7 @@ See [docs/cli-reference.md](docs/cli-reference.md) for the complete reference.
 ## Adding a Provider
 
 1. Create a new package: `packages/<provider>/`
-2. Implement the [`BridgePlugin`](docs/plugin-development.md) interface from `@llm-bridge/core`
+2. Implement the [`BridgePlugin`](docs/plugin-development.md) interface from `@ai-ide-bridge/core`
 3. Write tests for auth, models, and sessions
 4. Submit a PR
 
@@ -222,12 +222,12 @@ pnpm test
 ```
 llm-bridge/
 ├── packages/
-│   ├── core/           # @llm-bridge/core (HTTP server, daemon abstraction)
-│   ├── cursor/         # @llm-bridge/cursor (HTTP plugin)
-│   ├── copilot/        # @llm-bridge/copilot (HTTP plugin)
-│   ├── windsurf/       # @llm-bridge/windsurf (daemon plugin)
-│   ├── oauth/          # @llm-bridge/oauth (OAuth 2.0 helper)
-│   └── mcp/            # @llm-bridge/mcp (MCP server)
+│   ├── core/           # @ai-ide-bridge/core (HTTP server, daemon abstraction)
+│   ├── cursor/         # @ai-ide-bridge/cursor (HTTP plugin)
+│   ├── copilot/        # @ai-ide-bridge/copilot (HTTP plugin)
+│   ├── windsurf/       # @ai-ide-bridge/windsurf (daemon plugin)
+│   ├── oauth/          # @ai-ide-bridge/oauth (OAuth 2.0 helper)
+│   └── mcp/            # @ai-ide-bridge/mcp (MCP server)
 ├── cli/                # llm-bridge CLI
 ├── docs/               # Architecture, plugin dev, troubleshooting, getting started
 ├── examples/           # OpenCode config, docker-compose

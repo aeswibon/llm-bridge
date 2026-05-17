@@ -1,4 +1,4 @@
-import type { ToolDefinition } from '@llm-bridge/core';
+import type { ToolDefinition } from '@ai-ide-bridge/core';
 import type { WindsurfTool } from './types.js';
 
 export function translateTools(tools: ToolDefinition[]): WindsurfTool[] {

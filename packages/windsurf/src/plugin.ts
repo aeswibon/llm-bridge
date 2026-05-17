@@ -1,4 +1,4 @@
-import type { BridgePlugin, BridgeSession, ModelInfo } from '@llm-bridge/core';
+import type { BridgePlugin, BridgeSession, ModelInfo } from '@ai-ide-bridge/core';
 import { WindsurfBridgeSession } from './session.js';
 import { WINDSURF_MODELS } from './models.js';
 import type { WindsurfConfig } from './types.js';

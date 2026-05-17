@@ -1,5 +1,5 @@
 {
-  "name": "@llm-bridge/core",
+  "name": "@ai-ide-bridge/core",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",

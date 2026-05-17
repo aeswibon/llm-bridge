@@ -1,5 +1,5 @@
 {
-  "name": "@llm-bridge/copilot",
+  "name": "@ai-ide-bridge/copilot",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@llm-bridge/core": "workspace:*"
+    "@ai-ide-bridge/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

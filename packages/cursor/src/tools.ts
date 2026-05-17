@@ -1,4 +1,4 @@
-import type { ToolDefinition } from '@llm-bridge/core';
+import type { ToolDefinition } from '@ai-ide-bridge/core';
 
 export interface CursorTool {
   type: 'function';

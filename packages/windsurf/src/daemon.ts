@@ -1,4 +1,4 @@
-import { createDaemonManager, type DaemonManager } from '@llm-bridge/core';
+import { createDaemonManager, type DaemonManager } from '@ai-ide-bridge/core';
 import { homedir, platform, arch } from 'node:os';
 import { join } from 'node:path';
 

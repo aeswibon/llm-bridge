@@ -1,4 +1,4 @@
-import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '@llm-bridge/core';
+import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '@ai-ide-bridge/core';
 import { translateTools } from './tools.js';
 
 const COPILOT_API_BASE = 'https://api.github.com';

@@ -78,7 +78,7 @@ export async function uninstallDaemonCommand(): Promise<void> {
 }
 
 export async function daemonStatusCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   const path = await daemon.locate();
@@ -93,7 +93,7 @@ export async function daemonStatusCommand(): Promise<void> {
 }
 
 export async function daemonDownloadCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   console.log('Downloading Windsurf language server...');
@@ -107,7 +107,7 @@ export async function daemonDownloadCommand(): Promise<void> {
 }
 
 export async function daemonLocateCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   const path = await daemon.locate();

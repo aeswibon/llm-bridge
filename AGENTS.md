@@ -77,7 +77,7 @@ type StreamChunk =
 
 ```bash
 pnpm test              # All packages (45 tests)
-pnpm test --filter @llm-bridge/core  # Single package
+pnpm test --filter @ai-ide-bridge/core  # Single package
 ```
 
 Mock plugins implement `BridgePlugin` and `BridgeSession` with hardcoded responses. Tests use `port: 0` for dynamic port allocation.
@@ -125,7 +125,7 @@ Mock plugins implement `BridgePlugin` and `BridgeSession` with hardcoded respons
 
 ### 3. OAuth Support
 
-- Add generic OAuth helper to `@llm-bridge/core`
+- Add generic OAuth helper to `@ai-ide-bridge/core`
 - Support authorization code flow with PKCE
 - Store tokens securely (keychain on macOS, libsecret on Linux)
 - Update plugin interface to support OAuth config

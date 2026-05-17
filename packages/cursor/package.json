@@ -1,5 +1,5 @@
 {
-  "name": "@llm-bridge/cursor",
+  "name": "@ai-ide-bridge/cursor",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@cursor/sdk": "^1.0.13",
-    "@llm-bridge/core": "workspace:*"
+    "@ai-ide-bridge/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

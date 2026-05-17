@@ -20,16 +20,16 @@ importers:
 
   cli:
     dependencies:
-      '@llm-bridge/copilot':
+      '@ai-ide-bridge/copilot':
         specifier: workspace:*
         version: link:../packages/copilot
-      '@llm-bridge/core':
+      '@ai-ide-bridge/core':
         specifier: workspace:*
         version: link:../packages/core
-      '@llm-bridge/cursor':
+      '@ai-ide-bridge/cursor':
         specifier: workspace:*
         version: link:../packages/cursor
-      '@llm-bridge/windsurf':
+      '@ai-ide-bridge/windsurf':
         specifier: workspace:*
         version: link:../packages/windsurf
     devDependencies:
@@ -42,7 +42,7 @@ importers:
 
   packages/copilot:
     dependencies:
-      '@llm-bridge/core':
+      '@ai-ide-bridge/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -68,12 +68,12 @@ importers:
 
   packages/cursor:
     dependencies:
+      '@ai-ide-bridge/core':
+        specifier: workspace:*
+        version: link:../core
       '@cursor/sdk':
         specifier: ^1.0.13
         version: 1.0.13
-      '@llm-bridge/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.15.0
@@ -109,10 +109,10 @@ importers:
 
   packages/windsurf:
     dependencies:
-      '@llm-bridge/core':
+      '@ai-ide-bridge/core':
         specifier: workspace:*
         version: link:../core
-      '@llm-bridge/oauth':
+      '@ai-ide-bridge/oauth':
         specifier: workspace:*
         version: link:../oauth
     devDependencies:

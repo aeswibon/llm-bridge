@@ -1,4 +1,4 @@
-import type { BridgePlugin, BridgeSession, ModelInfo } from '@llm-bridge/core';
+import type { BridgePlugin, BridgeSession, ModelInfo } from '@ai-ide-bridge/core';
 import { CopilotBridgeSession } from './session.js';
 import { COPILOT_MODELS, type CopilotConfig } from './types.js';
 import { validateToken, getToken } from './auth.js';

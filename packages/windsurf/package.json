@@ -1,5 +1,5 @@
 {
-  "name": "@llm-bridge/windsurf",
+  "name": "@ai-ide-bridge/windsurf",
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
@@ -16,8 +16,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@llm-bridge/core": "workspace:*",
-    "@llm-bridge/oauth": "workspace:*"
+    "@ai-ide-bridge/core": "workspace:*",
+    "@ai-ide-bridge/oauth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

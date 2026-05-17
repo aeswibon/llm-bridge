@@ -37,10 +37,10 @@ cd packages/core && pnpm test
 ```
 llm-bridge/
 ├── packages/
-│   ├── core/           # @llm-bridge/core — HTTP server, plugin registry
-│   ├── cursor/         # @llm-bridge/cursor — Cursor SDK plugin
-│   └── mcp/            # @llm-bridge/mcp — MCP server for Cursor IDE
-├── cli/                # llm-bridge — CLI tool
+│   ├── core/           # @ai-ide-bridge/core — HTTP server, plugin registry
+│   ├── cursor/         # @ai-ide-bridge/cursor — Cursor SDK plugin
+│   └── mcp/            # @ai-ide-bridge/mcp — MCP server for Cursor IDE
+├── cli/                # @ai-ide-bridge/cli — CLI tool
 ├── docs/               # Architecture, plugin dev guide, troubleshooting
 ├── examples/           # OpenCode config, docker-compose
 └── scripts/            # Build scripts
@@ -57,7 +57,7 @@ llm-bridge/
 
 ## The Plugin Contract
 
-Every provider implements this interface from `@llm-bridge/core`:
+Every provider implements this interface from `@ai-ide-bridge/core`:
 
 ```typescript
 interface BridgePlugin {

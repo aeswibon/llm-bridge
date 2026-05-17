@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { translateTools } from '../src/tools.js';
-import type { ToolDefinition } from '@llm-bridge/core';
+import type { ToolDefinition } from '@ai-ide-bridge/core';
 
 describe('translateTools', () => {
   it('translates OpenAI tool definitions to Copilot format', () => {

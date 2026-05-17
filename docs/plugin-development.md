@@ -2,7 +2,7 @@
 
 ## Overview
 
-Plugins are npm packages that implement the `BridgePlugin` interface from `@llm-bridge/core`. There are two patterns: HTTP-based and daemon-based.
+Plugins are npm packages that implement the `BridgePlugin` interface from `@ai-ide-bridge/core`. There are two patterns: HTTP-based and daemon-based.
 
 ## BridgePlugin Interface
 
@@ -14,7 +14,7 @@ import type {
   Message,
   ToolDefinition,
   StreamChunk,
-} from '@llm-bridge/core';
+} from '@ai-ide-bridge/core';
 
 interface BridgePlugin {
   name: string;
@@ -52,7 +52,7 @@ import type {
   Message,
   ToolDefinition,
   StreamChunk,
-} from '@llm-bridge/core';
+} from '@ai-ide-bridge/core';
 
 export class MyHttpPlugin implements BridgePlugin {
   name = 'my-provider';
@@ -145,7 +145,7 @@ For providers with a local binary (Windsurf):
 ### Step 1: Create DaemonManager
 
 ```typescript
-import { createDaemonManager, type DaemonManager } from '@llm-bridge/core';
+import { createDaemonManager, type DaemonManager } from '@ai-ide-bridge/core';
 
 export function createMyDaemon(): DaemonManager {
   return createDaemonManager({
@@ -161,8 +161,8 @@ export function createMyDaemon(): DaemonManager {
 ### Step 2: Create Session
 
 ```typescript
-import { DaemonBridgeSession } from '@llm-bridge/core';
-import type { DaemonManager } from '@llm-bridge/core';
+import { DaemonBridgeSession } from '@ai-ide-bridge/core';
+import type { DaemonManager } from '@ai-ide-bridge/core';
 
 export class MyDaemonSession extends DaemonBridgeSession {
   constructor(daemon: DaemonManager, token: string, model: string, cwd: string = process.cwd()) {
@@ -182,7 +182,7 @@ export class MyDaemonSession extends DaemonBridgeSession {
 ### Step 3: Create Plugin
 
 ```typescript
-import type { BridgePlugin, BridgeSession, ModelInfo } from '@llm-bridge/core';
+import type { BridgePlugin, BridgeSession, ModelInfo } from '@ai-ide-bridge/core';
 import { MyDaemonSession } from './session.js';
 import { createMyDaemon } from './daemon.js';
 
@@ -216,7 +216,7 @@ export class MyBridgePlugin implements BridgePlugin {
 
 ```
 packages/my-provider/
-├── package.json          # name: @llm-bridge/my-provider
+├── package.json          # name: @ai-ide-bridge/my-provider
 ├── tsconfig.json         # extends ../../tsconfig.base.json
 ├── src/
 │   ├── index.ts          # Barrel exports
@@ -235,7 +235,7 @@ packages/my-provider/
 
 ```json
 {
-  "name": "@llm-bridge/my-provider",
+  "name": "@ai-ide-bridge/my-provider",
   "version": "2.0.0",
   "type": "module",
   "main": "dist/index.js",
@@ -246,8 +246,8 @@ packages/my-provider/
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@llm-bridge/core": "workspace:*",
-    "@llm-bridge/oauth": "workspace:*"
+    "@ai-ide-bridge/core": "workspace:*",
+    "@ai-ide-bridge/oauth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
@@ -309,10 +309,10 @@ describe('MyBridgePlugin', () => {
 Add the plugin to `cli/src/commands/start.ts`. Multiple plugins can be registered simultaneously:
 
 ```typescript
-import { CursorPlugin } from '@llm-bridge/cursor';
-import { CopilotPlugin } from '@llm-bridge/copilot';
-import { WindsurfPlugin } from '@llm-bridge/windsurf';
-import { MyBridgePlugin } from '@llm-bridge/my-provider';
+import { CursorPlugin } from '@ai-ide-bridge/cursor';
+import { CopilotPlugin } from '@ai-ide-bridge/copilot';
+import { WindsurfPlugin } from '@ai-ide-bridge/windsurf';
+import { MyBridgePlugin } from '@ai-ide-bridge/my-provider';
 
 // In startCommand():
 const plugins = [
@@ -362,4 +362,4 @@ The prefix is stripped before the model ID is passed to the plugin's `createSess
 
 ## Publishing
 
-Publish to npm with `@llm-bridge/` scope for discoverability.
+Publish to npm with `@ai-ide-bridge/` scope for discoverability.

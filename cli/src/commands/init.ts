@@ -1,7 +1,7 @@
 import { setPluginConfig, writeConfig, readConfig } from '../utils/config.js';
-import { CursorBridgePlugin } from '@llm-bridge/cursor';
-import { CopilotBridgePlugin } from '@llm-bridge/copilot';
-import { WindsurfBridgePlugin } from '@llm-bridge/windsurf';
+import { CursorBridgePlugin } from '@ai-ide-bridge/cursor';
+import { CopilotBridgePlugin } from '@ai-ide-bridge/copilot';
+import { WindsurfBridgePlugin } from '@ai-ide-bridge/windsurf';
 import { createInterface } from 'node:readline';
 
 const PROVIDERS = ['cursor', 'copilot', 'windsurf'] as const;

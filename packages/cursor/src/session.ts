@@ -1,6 +1,6 @@
 import { Agent } from '@cursor/sdk';
 import type { SDKAgent, SendOptions } from '@cursor/sdk';
-import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '@llm-bridge/core';
+import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '@ai-ide-bridge/core';
 import { translateTools } from './tools.js';
 
 export class CursorBridgeSession implements BridgeSession {

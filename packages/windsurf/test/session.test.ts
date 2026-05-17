@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WindsurfBridgeSession } from '../src/session.js';
-import type { Message, StreamChunk, DaemonManager } from '@llm-bridge/core';
+import type { Message, StreamChunk, DaemonManager } from '@ai-ide-bridge/core';
 import { EventEmitter } from 'node:events';
 import type { ChildProcess } from 'node:child_process';
 

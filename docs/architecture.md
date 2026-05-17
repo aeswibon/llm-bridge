@@ -33,7 +33,7 @@ llm-bridge is a local HTTP server that translates OpenAI-compatible API requests
 
 ## Components
 
-### Core (`@llm-bridge/core`)
+### Core (`@ai-ide-bridge/core`)
 
 The HTTP server and shared infrastructure:
 
@@ -53,7 +53,7 @@ Each provider is a separate package implementing `BridgePlugin`:
 - **listModels(config)** — Return available models
 - **createSession(config, model)** — Create a session for streaming responses
 
-The Cursor plugin (`@llm-bridge/cursor`) is the reference implementation using `@cursor/sdk`.
+The Cursor plugin (`@ai-ide-bridge/cursor`) is the reference implementation using `@cursor/sdk`.
 
 ## Plugin Patterns
 
@@ -100,7 +100,7 @@ Command-line interface for setup and management:
 
 The CLI config uses `defaultPlugin` to specify which plugin handles unprefixed model IDs.
 
-### MCP Server (`@llm-bridge/mcp`)
+### MCP Server (`@ai-ide-bridge/mcp`)
 
 Stdio MCP server for Cursor IDE integration:
 
@@ -131,12 +131,12 @@ Model IDs are resolved to plugins using a prefix-based routing system:
 
 ### Routing Table
 
-| Model ID                     | Prefix     | Target Plugin          | Model Passed to Plugin |
-| ---------------------------- | ---------- | ---------------------- | ---------------------- |
-| `cursor/composer-2`          | `cursor`   | `@llm-bridge/cursor`   | `composer-2`           |
-| `copilot/gpt-4o-copilot`     | `copilot`  | `@llm-bridge/copilot`  | `gpt-4o-copilot`       |
-| `windsurf/claude-4.5-sonnet` | `windsurf` | `@llm-bridge/windsurf` | `claude-4.5-sonnet`    |
-| `composer-2`                 | (none)     | `defaultPlugin`        | `composer-2`           |
+| Model ID                     | Prefix     | Target Plugin             | Model Passed to Plugin |
+| ---------------------------- | ---------- | ------------------------- | ---------------------- |
+| `cursor/composer-2`          | `cursor`   | `@ai-ide-bridge/cursor`   | `composer-2`           |
+| `copilot/gpt-4o-copilot`     | `copilot`  | `@ai-ide-bridge/copilot`  | `gpt-4o-copilot`       |
+| `windsurf/claude-4.5-sonnet` | `windsurf` | `@ai-ide-bridge/windsurf` | `claude-4.5-sonnet`    |
+| `composer-2`                 | (none)     | `defaultPlugin`           | `composer-2`           |
 
 ### Model Listing
 

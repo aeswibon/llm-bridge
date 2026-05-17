@@ -170,7 +170,7 @@ OAuth device flow timed out. Please try again.
 
 **Missing OAuth client ID**
 
-The OAuth client IDs in `@llm-bridge/oauth` are placeholders. For production use, register your own OAuth application with the provider and update the client ID/secret.
+The OAuth client IDs in `@ai-ide-bridge/oauth` are placeholders. For production use, register your own OAuth application with the provider and update the client ID/secret.
 
 ## Cursor API errors
 

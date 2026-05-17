@@ -1,5 +1,5 @@
 import { Cursor } from '@cursor/sdk';
-import type { BridgePlugin, BridgeSession, ModelInfo } from '@llm-bridge/core';
+import type { BridgePlugin, BridgeSession, ModelInfo } from '@ai-ide-bridge/core';
 import { CursorBridgeSession } from './session.js';
 
 export class CursorBridgePlugin implements BridgePlugin {
