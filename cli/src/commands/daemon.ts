@@ -76,3 +76,45 @@ export async function uninstallDaemonCommand(): Promise<void> {
     console.log('No LaunchAgent found.');
   }
 }
+
+export async function daemonStatusCommand(): Promise<void> {
+  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const daemon = createWindsurfDaemon();
+
+  const path = await daemon.locate();
+  if (path) {
+    console.log(`Windsurf language server found at: ${path}`);
+    const healthy = await daemon.healthCheck();
+    console.log(`Health: ${healthy ? 'OK' : 'Unhealthy'}`);
+  } else {
+    console.log('Windsurf language server not found.');
+    console.log('Run: llm-bridge daemon download');
+  }
+}
+
+export async function daemonDownloadCommand(): Promise<void> {
+  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const daemon = createWindsurfDaemon();
+
+  console.log('Downloading Windsurf language server...');
+  try {
+    const path = await daemon.download();
+    console.log(`Downloaded to: ${path}`);
+  } catch (err: any) {
+    console.error(`Download failed: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+export async function daemonLocateCommand(): Promise<void> {
+  const { createWindsurfDaemon } = await import('@llm-bridge/windsurf/daemon.js');
+  const daemon = createWindsurfDaemon();
+
+  const path = await daemon.locate();
+  if (path) {
+    console.log(path);
+  } else {
+    console.log('Not found');
+    process.exit(1);
+  }
+}
