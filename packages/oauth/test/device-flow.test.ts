@@ -60,6 +60,8 @@ describe('DeviceFlow', () => {
         deviceCode: 'device-abc',
         userCode: 'USER-123',
         verificationUri: 'https://github.com/login/device',
+        expiresIn: 900,
+        interval: 5,
       });
     });
 
@@ -73,6 +75,15 @@ describe('DeviceFlow', () => {
 
       await expect(flow.start()).rejects.toThrow('Device code request failed: 400');
     });
+
+    it('throws if response is missing required fields', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ device_code: 'abc' }),
+      } as Response);
+
+      await expect(flow.start()).rejects.toThrow('Invalid device code response: missing required fields');
+    });
   });
 
   describe('poll', () => {
@@ -83,6 +94,7 @@ describe('DeviceFlow', () => {
       (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-abc';
       (deviceFlow as unknown as Record<string, unknown>).interval = 100;
       (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
 
       const mockToken = {
         access_token: 'access-123',
@@ -112,6 +124,31 @@ describe('DeviceFlow', () => {
 
       const token = await pollPromise;
       expect(token.accessToken).toBe('access-123');
+      expect(callCount).toBe(3);
+
+      vi.useRealTimers();
+    });
+
+    it('makes first poll request immediately without sleeping', async () => {
+      vi.useFakeTimers();
+
+      const deviceFlow = new DeviceFlow(config);
+      (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-immediate';
+      (deviceFlow as unknown as Record<string, unknown>).interval = 5000;
+      (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 10000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = true;
+
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'immediate-token', expires_in: 3600 }),
+      } as Response);
+
+      const pollPromise = deviceFlow.poll();
+      // No advanceTimersByTimeAsync — the first request should be immediate
+      const token = await pollPromise;
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(token.accessToken).toBe('immediate-token');
 
       vi.useRealTimers();
     });
@@ -123,6 +160,7 @@ describe('DeviceFlow', () => {
       (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-expired';
       (deviceFlow as unknown as Record<string, unknown>).interval = 100;
       (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 200;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: false,
@@ -148,6 +186,7 @@ describe('DeviceFlow', () => {
       (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-slow';
       (deviceFlow as unknown as Record<string, unknown>).interval = 100;
       (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 30000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
 
       let callCount = 0;
       vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
@@ -172,6 +211,39 @@ describe('DeviceFlow', () => {
       vi.useRealTimers();
     });
 
+    it('verifies slow_down increases interval', async () => {
+      vi.useFakeTimers();
+
+      const deviceFlow = new DeviceFlow(config);
+      (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-backoff';
+      (deviceFlow as unknown as Record<string, unknown>).interval = 100;
+      (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 30000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
+
+      let callCount = 0;
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+        callCount++;
+        if (callCount === 1) {
+          return {
+            ok: false,
+            json: async () => ({ error: 'slow_down' }),
+          } as Response;
+        }
+        return {
+          ok: true,
+          json: async () => ({ access_token: 'after-backoff', expires_in: 3600 }),
+        } as Response;
+      });
+
+      const pollPromise = deviceFlow.poll();
+      // After first poll (immediate), slow_down adds 5000ms. Wait for that.
+      await vi.advanceTimersByTimeAsync(5200);
+      const token = await pollPromise;
+      expect(token.accessToken).toBe('after-backoff');
+
+      vi.useRealTimers();
+    });
+
     it('throws if poll() is called without start()', async () => {
       const newFlow = new DeviceFlow(config);
       await expect(newFlow.poll()).rejects.toThrow('No device code. Call start() first.');
@@ -184,6 +256,7 @@ describe('DeviceFlow', () => {
       (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-err';
       (deviceFlow as unknown as Record<string, unknown>).interval = 100;
       (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: false,
@@ -209,6 +282,7 @@ describe('DeviceFlow', () => {
       (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-store';
       (deviceFlow as unknown as Record<string, unknown>).interval = 100;
       (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
 
       vi.spyOn(globalThis, 'fetch').mockResolvedValue({
         ok: true,
@@ -229,6 +303,29 @@ describe('DeviceFlow', () => {
         refreshToken: 'refresh-456',
         scopes: ['read:user', 'repo'],
       }));
+
+      vi.useRealTimers();
+    });
+
+    it('throws if token response is missing access_token', async () => {
+      vi.useFakeTimers();
+
+      const deviceFlow = new DeviceFlow(config);
+      (deviceFlow as unknown as Record<string, unknown>).deviceCode = 'device-bad-token';
+      (deviceFlow as unknown as Record<string, unknown>).interval = 100;
+      (deviceFlow as unknown as Record<string, unknown>).expiresAt = Date.now() + 1000;
+      (deviceFlow as unknown as Record<string, unknown>).firstPoll = false;
+
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({ expires_in: 3600 }),
+      } as Response);
+
+      const caught = deviceFlow.poll().catch((e) => e);
+      await vi.advanceTimersByTimeAsync(200);
+      const err = await caught;
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).toBe('Invalid token response: missing access_token');
 
       vi.useRealTimers();
     });
