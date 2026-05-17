@@ -1,6 +1,7 @@
 import { BridgeServer, loadConfig } from '@llm-bridge/core';
 import { CursorBridgePlugin } from '@llm-bridge/cursor';
 import { CopilotBridgePlugin } from '@llm-bridge/copilot';
+import { WindsurfBridgePlugin } from '@llm-bridge/windsurf';
 
 export async function startCommand(): Promise<void> {
   const config = loadConfig();
@@ -16,6 +17,11 @@ export async function startCommand(): Promise<void> {
     server.registerPlugin(plugin);
     server.setActivePlugin('copilot');
     console.error(`[llm-bridge] active plugin: copilot`);
+  } else if (config.activePlugin === 'windsurf') {
+    const plugin = new WindsurfBridgePlugin();
+    server.registerPlugin(plugin);
+    server.setActivePlugin('windsurf');
+    console.error(`[llm-bridge] active plugin: windsurf`);
   } else {
     console.error(`[llm-bridge] warning: unknown plugin "${config.activePlugin}"`);
   }

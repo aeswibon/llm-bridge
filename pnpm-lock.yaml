@@ -29,6 +29,9 @@ importers:
       '@llm-bridge/cursor':
         specifier: workspace:*
         version: link:../packages/cursor
+      '@llm-bridge/windsurf':
+        specifier: workspace:*
+        version: link:../packages/windsurf
     devDependencies:
       '@types/node':
         specifier: ^22.15.0
@@ -96,6 +99,22 @@ importers:
         version: 2.1.9(@types/node@22.19.19)
 
   packages/oauth:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.15.0
+        version: 22.19.19
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@22.19.19)
+
+  packages/windsurf:
+    dependencies:
+      '@llm-bridge/core':
+        specifier: workspace:*
+        version: link:../core
+      '@llm-bridge/oauth':
+        specifier: workspace:*
+        version: link:../oauth
     devDependencies:
       '@types/node':
         specifier: ^22.15.0
