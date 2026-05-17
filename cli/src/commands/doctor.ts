@@ -7,7 +7,7 @@ export async function doctorCommand(): Promise<void> {
   const config = readConfig();
   console.log('llm-bridge diagnostics\n');
   console.log(`Config: ${configPath()}`);
-  console.log(`Active plugin: ${config.activePlugin}`);
+  console.log(`Active plugin: ${config.activePlugin ?? config.defaultPlugin}`);
   console.log(`Port: ${config.port}`);
   console.log(`Host: ${config.host}`);
   console.log(`Tool mode: ${config.toolMode}`);
