@@ -3,7 +3,7 @@ import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'nod
 import { homedir, platform, arch } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { IncomingMessage, request as httpRequest } from 'node:http';
+import { IncomingMessage, get as httpGet, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { URL } from 'node:url';
 
@@ -104,16 +104,17 @@ export function createDaemonManager(config: {
             });
           });
 
-          req.setTimeout(30000, () => {
-            req.destroy();
-            reject(new Error('Download timeout'));
-          });
-
           req.on('error', reject);
           req.end();
         });
 
-      return followRedirect(url, 0).then((data) => {
+      const downloadPromise = followRedirect(url, 0);
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Download timeout (30s)')), 30000);
+      });
+
+      return Promise.race([downloadPromise, timeoutPromise]).then((data) => {
         writeFileSync(destPath, data);
         chmodSync(destPath, 0o755);
         const hash = createHash('sha256').update(data).digest('hex');
@@ -133,9 +134,29 @@ export function createDaemonManager(config: {
       });
     },
 
-    async healthCheck(_port?: number): Promise<boolean> {
+    async healthCheck(port?: number): Promise<boolean> {
       const path = await this.locate();
-      return path !== null && existsSync(path);
+      if (!path) return false;
+      if (!existsSync(path)) return false;
+
+      if (port) {
+        try {
+          return new Promise((resolve) => {
+            const req = httpGet(`http://127.0.0.1:${port}/health`, (res) => {
+              resolve(res.statusCode === 200);
+            });
+            req.on('error', () => resolve(false));
+            req.setTimeout(5000, () => {
+              req.destroy();
+              resolve(false);
+            });
+          });
+        } catch {
+          return false;
+        }
+      }
+
+      return true;
     },
   };
 }
