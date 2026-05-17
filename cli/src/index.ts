@@ -3,7 +3,11 @@ import { initCommand } from './commands/init.js';
 import { startCommand } from './commands/start.js';
 import { configureOpencodeCommand } from './commands/configure.js';
 import { doctorCommand } from './commands/doctor.js';
-import { daemonStatusCommand, daemonDownloadCommand, daemonLocateCommand } from './commands/daemon.js';
+import {
+  daemonStatusCommand,
+  daemonDownloadCommand,
+  daemonLocateCommand,
+} from './commands/daemon.js';
 import { installDaemonCommand, uninstallDaemonCommand } from './commands/daemon.js';
 
 const command = process.argv[2] ?? 'help';

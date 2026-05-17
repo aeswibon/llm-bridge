@@ -14,24 +14,28 @@
 | -------------------------- | ---------- | ------------------------------------------------ |
 | `master`                   | 11 commits | Clean history, all GPG-signed, no duplicates     |
 | `phase2-release-workflows` | 15 commits | 4 commits ahead of master (CI workflows + fixes) |
+| `phase2-windsurf-daemon`   | 20 commits | Phase 2 Windsurf plugin implementation (Tasks 1-9 complete) |
 
-### Open PR
+### Open PRs
 
 - **PR #2:** https://github.com/aeswibon/llm-bridge/pull/2 (OPEN)
 - **Title:** fix: add crypto import and format files to pass CI checks
 - **Commits:** 4 (CI workflows, crypto fix, format fix, pnpm pack fix)
 - **Status:** Awaiting CI pass + merge
 
-### Packages (4)
+### Packages (7)
 
-| Package              | Version | Tests      | Status |
-| -------------------- | ------- | ---------- | ------ |
-| `@llm-bridge/core`   | 2.0.0   | 34 passing | ✅     |
-| `@llm-bridge/cursor` | 2.0.0   | 7 passing  | ✅     |
-| `@llm-bridge/mcp`    | 2.0.0   | 2 passing  | ✅     |
-| `llm-bridge` (CLI)   | 2.0.0   | 2 passing  | ✅     |
+| Package                | Version | Tests      | Status |
+| ---------------------- | ------- | ---------- | ------ |
+| `@llm-bridge/core`     | 2.0.0   | 64 passing | ✅     |
+| `@llm-bridge/cursor`   | 2.0.0   | 7 passing  | ✅     |
+| `@llm-bridge/copilot`  | 2.0.0   | 25 passing | ✅     |
+| `@llm-bridge/mcp`      | 2.0.0   | 2 passing  | ✅     |
+| `@llm-bridge/oauth`    | 2.0.0   | 48 passing | ✅     |
+| `@llm-bridge/windsurf` | 2.0.0   | 21 passing | ✅     |
+| `llm-bridge` (CLI)     | 2.0.0   | 2 passing  | ✅     |
 
-**Total: 45 tests passing**
+**Total: 169 tests passing**
 
 ## What Was Done
 
@@ -64,9 +68,14 @@
 
 ### Phase 2 Features (After PR #2 merge)
 
-1. **Copilot plugin** (`packages/copilot/`) — GitHub Copilot authentication + model catalog
-2. **Linux systemd daemon** — `llm-bridge daemon start` should create systemd unit
-3. **OAuth support** — Generic OAuth flow for plugin authentication
+1. ✅ **Windsurf plugin** (`packages/windsurf/`) — COMPLETE (Tasks 1-9)
+   - `DaemonManager` abstraction for local binary discovery/download
+   - `DaemonBridgeSession` for stdio/JSON-RPC communication
+   - Windsurf plugin with OAuth auth, model catalog, session management
+   - CLI daemon subcommands (status, download, locate)
+2. **Copilot plugin** (`packages/copilot/`) — GitHub Copilot authentication + model catalog
+3. **Linux systemd daemon** — `llm-bridge daemon start` should create systemd unit
+4. **OAuth support** — Generic OAuth flow for plugin authentication
 
 ### Phase 1 Remaining
 
@@ -81,23 +90,29 @@
 
 ## Key Files
 
-| File                             | Purpose                                                         |
-| -------------------------------- | --------------------------------------------------------------- |
-| `packages/core/src/server.ts`    | OpenAI-compatible HTTP server (main entry point)                |
-| `packages/core/src/types.ts`     | Core interfaces: `BridgePlugin`, `BridgeSession`, `StreamChunk` |
-| `packages/cursor/src/plugin.ts`  | Cursor SDK reference implementation                             |
-| `cli/src/index.ts`               | CLI command router                                              |
-| `cli/src/commands/daemon.ts`     | Daemon management (macOS LaunchAgent)                           |
-| `.github/workflows/pr-build.yml` | PR/merge CI                                                     |
-| `.github/workflows/release.yml`  | Release automation                                              |
-| `Dockerfile`                     | Multi-platform Docker image                                     |
+| File                                  | Purpose                                                         |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `packages/core/src/server.ts`         | OpenAI-compatible HTTP server (main entry point)                |
+| `packages/core/src/types.ts`          | Core interfaces: `BridgePlugin`, `BridgeSession`, `StreamChunk` |
+| `packages/core/src/daemon.ts`         | DaemonManager abstraction (locate, download, spawn, healthCheck)|
+| `packages/core/src/daemon-session.ts` | DaemonBridgeSession for stdio/JSON-RPC communication            |
+| `packages/cursor/src/plugin.ts`       | Cursor SDK reference implementation                             |
+| `packages/windsurf/src/plugin.ts`     | WindsurfBridgePlugin implementation                             |
+| `packages/windsurf/src/session.ts`    | WindsurfBridgeSession extending core session                    |
+| `packages/windsurf/src/daemon.ts`     | Windsurf-specific daemon configuration                          |
+| `packages/windsurf/src/auth.ts`       | Token extraction & validation                                   |
+| `cli/src/index.ts`                    | CLI command router                                              |
+| `cli/src/commands/daemon.ts`          | Daemon management (macOS LaunchAgent + windsurf subcommands)    |
+| `.github/workflows/pr-build.yml`      | PR/merge CI                                                     |
+| `.github/workflows/release.yml`       | Release automation                                              |
+| `Dockerfile`                          | Multi-platform Docker image                                     |
 
 ## Commands
 
 ```bash
 pnpm install          # Install dependencies
 pnpm build            # Build all packages
-pnpm test             # Run all tests (45 total)
+pnpm test             # Run all tests (169 total)
 pnpm lint             # ESLint
 pnpm typecheck        # TypeScript check
 pnpm format:check     # Prettier check
@@ -115,5 +130,6 @@ git config commit.gpgsign true
 
 1. Check PR #2 CI status — if passing, merge it
 2. If CI still failing, fix the specific failing job
-3. After merge, implement Phase 2 features (Copilot plugin first)
+3. After merge, implement remaining Phase 2 features (Copilot plugin, Linux systemd daemon, OAuth)
 4. Address Dependabot vulnerabilities if time permits
+5. Windsurf plugin is complete — `PLACEHOLDER_SHA256` in `packages/windsurf/src/daemon.ts` needs real checksum when binary URL is confirmed
