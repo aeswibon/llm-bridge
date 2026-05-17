@@ -2,9 +2,12 @@ import type { ChildProcess } from 'node:child_process';
 import type { BridgeSession, Message, ToolDefinition, StreamChunk } from './types.js';
 import type { DaemonManager } from './daemon.js';
 
+const MAX_BUFFER_SIZE = 1024 * 1024; // 1MB
+
 export class DaemonBridgeSession implements BridgeSession {
   private proc: ChildProcess | null = null;
   private requestId = 0;
+  private busy = false;
 
   constructor(
     private daemon: DaemonManager,
@@ -14,9 +17,16 @@ export class DaemonBridgeSession implements BridgeSession {
   ) {}
 
   async *send(messages: Message[], tools?: ToolDefinition[]): AsyncIterable<StreamChunk> {
+    if (this.busy) {
+      yield { type: 'error', content: 'Session is busy — concurrent send() calls are not supported', finishReason: 'error' };
+      return;
+    }
+    this.busy = true;
+
     if (!this.proc) {
       const binaryPath = await this.daemon.locate();
       if (!binaryPath) {
+        this.busy = false;
         throw new Error(`Daemon binary '${this.daemon.binaryName}' not found`);
       }
       this.proc = this.daemon.spawn(binaryPath, []);
@@ -46,18 +56,27 @@ export class DaemonBridgeSession implements BridgeSession {
     this.proc.stdin!.write(JSON.stringify(request) + '\n');
 
     let buffer = '';
+    let stderrBuffer = '';
     let finished = false;
     let capturedError: Error | null = null;
+    let onDataResolve: (() => void) | null = null;
+
+    this.proc.stderr?.on('data', (data: Buffer) => {
+      stderrBuffer += data.toString();
+    });
 
     const onData = (data: Buffer) => {
       buffer += data.toString();
+      if (buffer.length > MAX_BUFFER_SIZE) {
+        capturedError = new Error(`stdout buffer exceeded max size of ${MAX_BUFFER_SIZE} bytes`);
+      }
+      onDataResolve?.();
     };
 
     const onError = (err: Error) => {
       if (!capturedError) {
         capturedError = err;
-        this.proc?.removeAllListeners();
-        this.proc = null;
+        onDataResolve?.();
       }
     };
 
@@ -67,18 +86,21 @@ export class DaemonBridgeSession implements BridgeSession {
     try {
       while (!finished) {
         if (capturedError) {
+          const stderrInfo = stderrBuffer.trim() ? ` (stderr: ${stderrBuffer.slice(0, 500)})` : '';
           yield {
             type: 'error',
-            content: `Process error: ${(capturedError as Error).message}`,
+            content: `Process error: ${(capturedError as Error).message}${stderrInfo}`,
             finishReason: 'error',
           };
-          finished = true;
           break;
         }
 
         const newlineIndex = buffer.indexOf('\n');
         if (newlineIndex === -1) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
+          const waitForData = new Promise<void>((resolve) => {
+            onDataResolve = resolve;
+          });
+          await waitForData;
           continue;
         }
 
@@ -140,6 +162,7 @@ export class DaemonBridgeSession implements BridgeSession {
     } finally {
       this.proc?.stdout?.removeListener('data', onData);
       this.proc?.removeListener('error', onError);
+      this.busy = false;
     }
   }
 
