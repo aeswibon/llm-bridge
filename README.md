@@ -117,39 +117,39 @@ That's it. Your client now has access to all three provider model catalogs.
 
 ## Supported Providers
 
-| Provider                     | Package                | Type   | Status      |
-| ---------------------------- | ---------------------- | ------ | ----------- |
-| [Cursor](https://cursor.com) | `@llm-bridge/cursor`   | HTTP   | ✅ Built-in |
-| GitHub Copilot               | `@llm-bridge/copilot`  | HTTP   | ✅ Built-in |
+| Provider                         | Package                | Type   | Status      |
+| -------------------------------- | ---------------------- | ------ | ----------- |
+| [Cursor](https://cursor.com)     | `@llm-bridge/cursor`   | HTTP   | ✅ Built-in |
+| GitHub Copilot                   | `@llm-bridge/copilot`  | HTTP   | ✅ Built-in |
 | [Windsurf](https://windsurf.com) | `@llm-bridge/windsurf` | Daemon | ✅ Built-in |
 
 Want to add a provider? See [Adding a Provider](#adding-a-provider) below.
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Getting Started](docs/getting-started.md) | Installation, quick start, configuration |
-| [Architecture](docs/architecture.md) | System design, model routing, data flow |
-| [CLI Reference](docs/cli-reference.md) | All CLI commands and options |
-| [Configuration](docs/configuration.md) | Config file format, environment variables |
-| [Deployment](docs/deployment.md) | Production deployment guides |
-| [Plugin Development](docs/plugin-development.md) | Build your own provider plugin |
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
+| Document                                         | Description                               |
+| ------------------------------------------------ | ----------------------------------------- |
+| [Getting Started](docs/getting-started.md)       | Installation, quick start, configuration  |
+| [Architecture](docs/architecture.md)             | System design, model routing, data flow   |
+| [CLI Reference](docs/cli-reference.md)           | All CLI commands and options              |
+| [Configuration](docs/configuration.md)           | Config file format, environment variables |
+| [Deployment](docs/deployment.md)                 | Production deployment guides              |
+| [Plugin Development](docs/plugin-development.md) | Build your own provider plugin            |
+| [Troubleshooting](docs/troubleshooting.md)       | Common issues and solutions               |
 
 ## Architecture
 
 llm-bridge is a **monorepo** with seven packages:
 
-| Package              | Description                                                                   |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `@llm-bridge/core`   | HTTP server, plugin registry, session management, daemon abstraction, request/response formatting |
-| `@llm-bridge/cursor` | Cursor SDK plugin — HTTP-based reference implementation                       |
-| `@llm-bridge/copilot`| GitHub Copilot plugin — HTTP-based implementation                             |
-| `@llm-bridge/windsurf`| Windsurf plugin — daemon-based (stdio/JSON-RPC) implementation               |
-| `@llm-bridge/oauth`  | OAuth 2.0 device flow authentication helper                                   |
-| `@llm-bridge/mcp`    | MCP server for AI IDE integration                                             |
-| `llm-bridge`         | CLI — setup wizard, server launcher, daemon management, config injector, diagnostics |
+| Package                | Description                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `@llm-bridge/core`     | HTTP server, plugin registry, session management, daemon abstraction, request/response formatting |
+| `@llm-bridge/cursor`   | Cursor SDK plugin — HTTP-based reference implementation                                           |
+| `@llm-bridge/copilot`  | GitHub Copilot plugin — HTTP-based implementation                                                 |
+| `@llm-bridge/windsurf` | Windsurf plugin — daemon-based (stdio/JSON-RPC) implementation                                    |
+| `@llm-bridge/oauth`    | OAuth 2.0 device flow authentication helper                                                       |
+| `@llm-bridge/mcp`      | MCP server for AI IDE integration                                                                 |
+| `llm-bridge`           | CLI — setup wizard, server launcher, daemon management, config injector, diagnostics              |
 
 See [docs/architecture.md](docs/architecture.md) for a detailed breakdown.
 
@@ -184,17 +184,17 @@ See [docs/configuration.md](docs/configuration.md) for the full reference.
 
 ## CLI Commands
 
-| Command                       | Description                          |
-| ----------------------------- | ------------------------------------ |
-| `llm-bridge init`             | Interactive setup wizard             |
-| `llm-bridge start`            | Launch bridge server                 |
-| `llm-bridge configure`        | Inject provider config into OpenCode |
-| `llm-bridge doctor`           | Run diagnostics                      |
-| `llm-bridge install-daemon`   | Install macOS LaunchAgent            |
-| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent             |
-| `llm-bridge daemon status`    | Check daemon binary status (Windsurf)|
-| `llm-bridge daemon download`  | Download daemon binary (Windsurf)    |
-| `llm-bridge daemon locate`    | Find daemon binary path (Windsurf)   |
+| Command                       | Description                           |
+| ----------------------------- | ------------------------------------- |
+| `llm-bridge init`             | Interactive setup wizard              |
+| `llm-bridge start`            | Launch bridge server                  |
+| `llm-bridge configure`        | Inject provider config into OpenCode  |
+| `llm-bridge doctor`           | Run diagnostics                       |
+| `llm-bridge install-daemon`   | Install macOS LaunchAgent             |
+| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent              |
+| `llm-bridge daemon status`    | Check daemon binary status (Windsurf) |
+| `llm-bridge daemon download`  | Download daemon binary (Windsurf)     |
+| `llm-bridge daemon locate`    | Find daemon binary path (Windsurf)    |
 
 See [docs/cli-reference.md](docs/cli-reference.md) for the complete reference.
 

@@ -117,7 +117,9 @@ describe('BridgeServer', () => {
 class MockPlugin2 implements BridgePlugin {
   name = 'mock2';
   version = '1.0.0';
-  async authenticate(): Promise<boolean> { return true; }
+  async authenticate(): Promise<boolean> {
+    return true;
+  }
   async listModels(): Promise<ModelInfo[]> {
     return [{ id: 'mock2-model', name: 'Mock2 Model' }];
   }

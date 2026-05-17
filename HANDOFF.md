@@ -10,10 +10,10 @@
 
 ### Branches
 
-| Branch                     | Commits    | Status                                           |
-| -------------------------- | ---------- | ------------------------------------------------ |
-| `master`                   | 11 commits | Clean history, all GPG-signed, no duplicates     |
-| `phase2-release-workflows` | 15 commits | 4 commits ahead of master (CI workflows + fixes) |
+| Branch                     | Commits    | Status                                                      |
+| -------------------------- | ---------- | ----------------------------------------------------------- |
+| `master`                   | 11 commits | Clean history, all GPG-signed, no duplicates                |
+| `phase2-release-workflows` | 15 commits | 4 commits ahead of master (CI workflows + fixes)            |
 | `phase2-windsurf-daemon`   | 20 commits | Phase 2 Windsurf plugin implementation (Tasks 1-9 complete) |
 
 ### Open PRs
@@ -90,22 +90,22 @@
 
 ## Key Files
 
-| File                                  | Purpose                                                         |
-| ------------------------------------- | --------------------------------------------------------------- |
-| `packages/core/src/server.ts`         | OpenAI-compatible HTTP server (main entry point)                |
-| `packages/core/src/types.ts`          | Core interfaces: `BridgePlugin`, `BridgeSession`, `StreamChunk` |
-| `packages/core/src/daemon.ts`         | DaemonManager abstraction (locate, download, spawn, healthCheck)|
-| `packages/core/src/daemon-session.ts` | DaemonBridgeSession for stdio/JSON-RPC communication            |
-| `packages/cursor/src/plugin.ts`       | Cursor SDK reference implementation                             |
-| `packages/windsurf/src/plugin.ts`     | WindsurfBridgePlugin implementation                             |
-| `packages/windsurf/src/session.ts`    | WindsurfBridgeSession extending core session                    |
-| `packages/windsurf/src/daemon.ts`     | Windsurf-specific daemon configuration                          |
-| `packages/windsurf/src/auth.ts`       | Token extraction & validation                                   |
-| `cli/src/index.ts`                    | CLI command router                                              |
-| `cli/src/commands/daemon.ts`          | Daemon management (macOS LaunchAgent + windsurf subcommands)    |
-| `.github/workflows/pr-build.yml`      | PR/merge CI                                                     |
-| `.github/workflows/release.yml`       | Release automation                                              |
-| `Dockerfile`                          | Multi-platform Docker image                                     |
+| File                                  | Purpose                                                          |
+| ------------------------------------- | ---------------------------------------------------------------- |
+| `packages/core/src/server.ts`         | OpenAI-compatible HTTP server (main entry point)                 |
+| `packages/core/src/types.ts`          | Core interfaces: `BridgePlugin`, `BridgeSession`, `StreamChunk`  |
+| `packages/core/src/daemon.ts`         | DaemonManager abstraction (locate, download, spawn, healthCheck) |
+| `packages/core/src/daemon-session.ts` | DaemonBridgeSession for stdio/JSON-RPC communication             |
+| `packages/cursor/src/plugin.ts`       | Cursor SDK reference implementation                              |
+| `packages/windsurf/src/plugin.ts`     | WindsurfBridgePlugin implementation                              |
+| `packages/windsurf/src/session.ts`    | WindsurfBridgeSession extending core session                     |
+| `packages/windsurf/src/daemon.ts`     | Windsurf-specific daemon configuration                           |
+| `packages/windsurf/src/auth.ts`       | Token extraction & validation                                    |
+| `cli/src/index.ts`                    | CLI command router                                               |
+| `cli/src/commands/daemon.ts`          | Daemon management (macOS LaunchAgent + windsurf subcommands)     |
+| `.github/workflows/pr-build.yml`      | PR/merge CI                                                      |
+| `.github/workflows/release.yml`       | Release automation                                               |
+| `Dockerfile`                          | Multi-platform Docker image                                      |
 
 ## Commands
 
