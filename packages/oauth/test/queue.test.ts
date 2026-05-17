@@ -50,12 +50,15 @@ describe('RefreshQueue', () => {
   it('propagates errors to all waiting callers', async () => {
     const refreshFn = vi.fn().mockRejectedValue(new Error('Network error'));
 
-    const promises = [
-      queue.enqueue('provider-x', refreshFn),
-      queue.enqueue('provider-x', refreshFn),
-    ];
+    const [err1, err2] = await Promise.all([
+      queue.enqueue('provider-x', refreshFn).catch((e) => e),
+      queue.enqueue('provider-x', refreshFn).catch((e) => e),
+    ]);
 
-    await expect(Promise.all(promises)).rejects.toThrow('Network error');
+    expect(err1).toBeInstanceOf(Error);
+    expect((err1 as Error).message).toBe('Network error');
+    expect(err2).toBeInstanceOf(Error);
+    expect((err2 as Error).message).toBe('Network error');
     expect(refreshFn).toHaveBeenCalledTimes(1);
   });
 
