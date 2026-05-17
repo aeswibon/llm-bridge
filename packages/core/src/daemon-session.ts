@@ -18,7 +18,11 @@ export class DaemonBridgeSession implements BridgeSession {
 
   async *send(messages: Message[], tools?: ToolDefinition[]): AsyncIterable<StreamChunk> {
     if (this.busy) {
-      yield { type: 'error', content: 'Session is busy — concurrent send() calls are not supported', finishReason: 'error' };
+      yield {
+        type: 'error',
+        content: 'Session is busy — concurrent send() calls are not supported',
+        finishReason: 'error',
+      };
       return;
     }
     this.busy = true;
@@ -162,7 +166,13 @@ export class DaemonBridgeSession implements BridgeSession {
           yield {
             type: 'done',
             finishReason:
-              reason === 'stop' ? 'stop' : reason === 'tool_calls' ? 'tool_calls' : reason === 'length' ? 'length' : 'error',
+              reason === 'stop'
+                ? 'stop'
+                : reason === 'tool_calls'
+                  ? 'tool_calls'
+                  : reason === 'length'
+                    ? 'length'
+                    : 'error',
           };
           finished = true;
         }

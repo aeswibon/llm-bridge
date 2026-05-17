@@ -1,5 +1,13 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { accessSync, chmodSync, constants, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+  accessSync,
+  chmodSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { homedir, platform, arch } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -75,18 +83,13 @@ export function createDaemonManager(config: {
       mkdirSync(daemonsDir, { recursive: true });
       const destPath = join(daemonsDir, config.binaryName);
 
-      const url = config.downloadUrl
-        .replace('{platform}', platform())
-        .replace('{arch}', arch());
+      const url = config.downloadUrl.replace('{platform}', platform()).replace('{arch}', arch());
 
       const MAX_REDIRECTS = 5;
       const MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024; // 500MB
       let currentReq: ReturnType<typeof httpRequest> | null = null;
 
-      const followRedirect = (
-        currentUrl: string,
-        redirectCount: number,
-      ): Promise<Buffer> =>
+      const followRedirect = (currentUrl: string, redirectCount: number): Promise<Buffer> =>
         new Promise((resolve, reject) => {
           const parsed = new URL(currentUrl);
           const requestFn = parsed.protocol === 'https:' ? httpsRequest : httpRequest;
@@ -159,14 +162,14 @@ export function createDaemonManager(config: {
           writeFileSync(destPath, data);
           const hash = createHash('sha256').update(data).digest('hex');
           if (hash !== config.checksum) {
-            throw new Error(
-              `Checksum mismatch: expected ${config.checksum}, got ${hash}`,
-            );
+            throw new Error(`Checksum mismatch: expected ${config.checksum}, got ${hash}`);
           }
           chmodSync(destPath, 0o755);
           return destPath;
         } catch (err) {
-          try { unlinkSync(destPath); } catch {}
+          try {
+            unlinkSync(destPath);
+          } catch {}
           throw err;
         }
       });

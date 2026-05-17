@@ -50,14 +50,19 @@ describe('WindsurfBridgePlugin', () => {
 
     it('throws when no token is configured', async () => {
       const config: WindsurfConfig = {};
-      await expect(plugin.listModels(config as Record<string, string>)).rejects.toThrow('Missing WINDSURF_TOKEN');
+      await expect(plugin.listModels(config as Record<string, string>)).rejects.toThrow(
+        'Missing WINDSURF_TOKEN',
+      );
     });
   });
 
   describe('createSession', () => {
     it('creates a WindsurfBridgeSession', async () => {
       const config: WindsurfConfig = { WINDSURF_TOKEN: 'token' };
-      const session = await plugin.createSession(config as Record<string, string>, 'claude-4.5-sonnet');
+      const session = await plugin.createSession(
+        config as Record<string, string>,
+        'claude-4.5-sonnet',
+      );
 
       expect(session).toBeDefined();
       expect(typeof session.send).toBe('function');
@@ -66,7 +71,9 @@ describe('WindsurfBridgePlugin', () => {
 
     it('throws when no token is configured', async () => {
       const config: WindsurfConfig = {};
-      await expect(plugin.createSession(config as Record<string, string>, 'claude-4.5-sonnet')).rejects.toThrow('Missing WINDSURF_TOKEN');
+      await expect(
+        plugin.createSession(config as Record<string, string>, 'claude-4.5-sonnet'),
+      ).rejects.toThrow('Missing WINDSURF_TOKEN');
     });
   });
 });
