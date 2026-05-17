@@ -1,6 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createDaemonManager } from '../src/daemon.js';
-import { accessSync, chmodSync, constants, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  accessSync,
+  chmodSync,
+  constants,
+  existsSync,
+  mkdirSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -194,8 +203,7 @@ describe('createDaemonManager', () => {
 
     it('downloads a binary and makes it executable', async () => {
       const content = '#!/bin/bash\necho hello';
-      const checksum =
-        'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
+      const checksum = 'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
 
       await startServer((_req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
@@ -220,8 +228,7 @@ describe('createDaemonManager', () => {
 
     it('follows redirects up to the limit', async () => {
       const content = '#!/bin/bash\necho hello';
-      const checksum =
-        'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
+      const checksum = 'ce4d2c05413f9716411aa45c7fe16dc19edd3a88249732eaae5cefee4fc8bd63';
       let redirectCount = 0;
 
       await startServer((_req, res) => {

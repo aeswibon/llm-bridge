@@ -11,6 +11,7 @@ llm-bridge is a command-line tool that runs a local HTTP server translating Open
 Interactive setup wizard for configuring one or more providers.
 
 **What it does:**
+
 1. Asks which provider to configure (cursor, copilot, windsurf)
 2. Collects the required credential for that provider
 3. Validates the credential against the provider's API
@@ -19,6 +20,7 @@ Interactive setup wizard for configuring one or more providers.
 6. Sets the first configured provider as the `defaultPlugin`
 
 **Prompts:**
+
 ```
 llm-bridge setup wizard
 
@@ -36,6 +38,7 @@ Config saved. Run 'llm-bridge start' to launch.
 ```
 
 **Config output:**
+
 ```json
 {
   "defaultPlugin": "cursor",
@@ -64,6 +67,7 @@ Config saved. Run 'llm-bridge start' to launch.
 Launch the bridge HTTP server.
 
 **What it does:**
+
 1. Loads config from `~/.config/llm-bridge/config.json`
 2. Registers all plugins listed in `config.plugins`
 3. Sets the `defaultPlugin` for fallback routing
@@ -71,6 +75,7 @@ Launch the bridge HTTP server.
 5. Listens for SIGINT/SIGTERM for graceful shutdown
 
 **Console output:**
+
 ```
 [llm-bridge] registered plugin: cursor
 [llm-bridge] registered plugin: windsurf
@@ -79,6 +84,7 @@ Launch the bridge HTTP server.
 ```
 
 **Routing behavior:**
+
 - `POST /v1/chat/completions` with `"model": "cursor/composer-2"` → Cursor plugin
 - `POST /v1/chat/completions` with `"model": "windsurf/claude-4.5-sonnet"` → Windsurf plugin
 - `POST /v1/chat/completions` with `"model": "composer-2"` (no prefix) → defaultPlugin (cursor)
@@ -97,18 +103,21 @@ Launch the bridge HTTP server.
 Inject llm-bridge provider configuration into OpenCode.
 
 **What it does:**
+
 1. Searches for `opencode.json` in standard locations
 2. Adds or updates the `llm-bridge` provider entry
 3. Sets the model to the default provider's default model
 4. Writes the updated config
 
 **Search locations (in order):**
+
 1. `~/.config/opencode/opencode.json`
 2. `~/.config/opencode/opencode.jsonc`
 3. `./opencode.json` (current directory)
 4. `./opencode.jsonc` (current directory)
 
 **Injected config:**
+
 ```json
 {
   "provider": {
@@ -135,12 +144,14 @@ Inject llm-bridge provider configuration into OpenCode.
 Run diagnostic checks.
 
 **Checks performed:**
+
 1. Config file existence and path
 2. Active plugin configuration
 3. Bridge server connectivity (health endpoint)
 4. Port availability
 
 **Sample output:**
+
 ```
 llm-bridge diagnostics
 
@@ -162,6 +173,7 @@ Tool mode: lenient
 Install a macOS LaunchAgent to auto-start llm-bridge at login.
 
 **What it does:**
+
 1. Creates a plist at `~/Library/LaunchAgents/com.llm-bridge.daemon.plist`
 2. Points to the llm-bridge binary wrapper script
 3. Bootstraps the LaunchAgent via `launchctl`
@@ -176,6 +188,7 @@ Install a macOS LaunchAgent to auto-start llm-bridge at login.
 Remove the macOS LaunchAgent.
 
 **What it does:**
+
 1. Unbootstraps the LaunchAgent via `launchctl`
 2. Deletes the plist file
 
@@ -186,11 +199,13 @@ Remove the macOS LaunchAgent.
 Check if the Windsurf language server daemon is available.
 
 **Search order:**
+
 1. `WINDSURF_LANGUAGE_SERVER_PATH` environment variable
 2. macOS default: `/Applications/Windsurf.app/Contents/Resources/language_server`
 3. `~/.llm-bridge/daemons/language_server` (downloaded)
 
 **Output:**
+
 ```
 Windsurf language server found at: /Applications/Windsurf.app/Contents/Resources/language_server
 Health: OK

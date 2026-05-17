@@ -29,14 +29,14 @@ Location: `~/.config/llm-bridge/config.json`
 
 ### Fields
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `defaultPlugin` | string | `"cursor"` | Plugin used when model name has no prefix. Also used by `llm-bridge configure` |
-| `port` | number | `3849` | HTTP server port |
-| `host` | string | `"127.0.0.1"` | HTTP server bind address |
-| `plugins` | object | `{}` | Provider credentials. Keys are plugin names, values are credential objects |
-| `sessionTTL` | number | `1800` | Session lifetime in seconds (30 min). Sessions are disposed after this time |
-| `toolMode` | string | `"lenient"` | Tool call handling: `"strict"` rejects invalid tool calls, `"lenient"` falls back to text |
+| Field           | Type   | Default       | Description                                                                               |
+| --------------- | ------ | ------------- | ----------------------------------------------------------------------------------------- |
+| `defaultPlugin` | string | `"cursor"`    | Plugin used when model name has no prefix. Also used by `llm-bridge configure`            |
+| `port`          | number | `3849`        | HTTP server port                                                                          |
+| `host`          | string | `"127.0.0.1"` | HTTP server bind address                                                                  |
+| `plugins`       | object | `{}`          | Provider credentials. Keys are plugin names, values are credential objects                |
+| `sessionTTL`    | number | `1800`        | Session lifetime in seconds (30 min). Sessions are disposed after this time               |
+| `toolMode`      | string | `"lenient"`   | Tool call handling: `"strict"` rejects invalid tool calls, `"lenient"` falls back to text |
 
 ### `plugins` Object
 
@@ -58,10 +58,10 @@ Each key is a plugin name. Each value is a credential object with environment-va
 
 **Credential keys per provider:**
 
-| Provider | Required Keys | Optional Keys |
-|----------|--------------|---------------|
-| cursor | `CURSOR_API_KEY` | — |
-| copilot | `GITHUB_TOKEN` | — |
+| Provider | Required Keys    | Optional Keys                   |
+| -------- | ---------------- | ------------------------------- |
+| cursor   | `CURSOR_API_KEY` | —                               |
+| copilot  | `GITHUB_TOKEN`   | —                               |
 | windsurf | `WINDSURF_TOKEN` | `WINDSURF_LANGUAGE_SERVER_PATH` |
 
 ---
@@ -70,15 +70,15 @@ Each key is a plugin name. Each value is a credential object with environment-va
 
 All config values can be overridden via environment variables:
 
-| Variable | Overrides | Description |
-|----------|-----------|-------------|
-| `LLM_BRIDGE_PORT` | `port` | Server port |
-| `LLM_BRIDGE_HOST` | `host` | Server bind address |
-| `LLM_BRIDGE_CONFIG` | entire config | Path to config file (default: `~/.config/llm-bridge/config.json`) |
-| `CURSOR_API_KEY` | `plugins.cursor.CURSOR_API_KEY` | Cursor API key |
-| `GITHUB_TOKEN` | `plugins.copilot.GITHUB_TOKEN` | GitHub token for Copilot |
-| `WINDSURF_TOKEN` | `plugins.windsurf.WINDSURF_TOKEN` | Windsurf token |
-| `WINDSURF_LANGUAGE_SERVER_PATH` | `plugins.windsurf.WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path |
+| Variable                        | Overrides                                        | Description                                                       |
+| ------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
+| `LLM_BRIDGE_PORT`               | `port`                                           | Server port                                                       |
+| `LLM_BRIDGE_HOST`               | `host`                                           | Server bind address                                               |
+| `LLM_BRIDGE_CONFIG`             | entire config                                    | Path to config file (default: `~/.config/llm-bridge/config.json`) |
+| `CURSOR_API_KEY`                | `plugins.cursor.CURSOR_API_KEY`                  | Cursor API key                                                    |
+| `GITHUB_TOKEN`                  | `plugins.copilot.GITHUB_TOKEN`                   | GitHub token for Copilot                                          |
+| `WINDSURF_TOKEN`                | `plugins.windsurf.WINDSURF_TOKEN`                | Windsurf token                                                    |
+| `WINDSURF_LANGUAGE_SERVER_PATH` | `plugins.windsurf.WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path                                       |
 
 **Precedence:** Environment variables > config file > defaults
 
@@ -93,6 +93,7 @@ When a client sends a request to `/v1/chat/completions`, llm-bridge determines w
 ```json
 { "model": "cursor/composer-2" }
 ```
+
 → Routes to the `cursor` plugin. The prefix (`cursor/`) is stripped before sending to the plugin.
 
 ### Without Prefix
@@ -100,6 +101,7 @@ When a client sends a request to `/v1/chat/completions`, llm-bridge determines w
 ```json
 { "model": "composer-2" }
 ```
+
 → Routes to `defaultPlugin` (from config, defaults to `cursor`).
 
 ### Unknown Prefix
@@ -107,6 +109,7 @@ When a client sends a request to `/v1/chat/completions`, llm-bridge determines w
 ```json
 { "model": "unknown/some-model" }
 ```
+
 → Returns `400 Bad Request` with error: `Unknown plugin: "unknown"`
 
 ### Available Models

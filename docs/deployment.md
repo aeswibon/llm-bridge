@@ -10,12 +10,14 @@ npm install -g llm-bridge
 **Logs:** stderr (redirect with `llm-bridge start > /dev/null 2> llm-bridge.log`)
 
 **Start at login (macOS):**
+
 ```bash
 llm-bridge install-daemon
 ```
 
 **Start at login (Linux):**
 Create a systemd service at `~/.config/systemd/user/llm-bridge.service`:
+
 ```ini
 [Unit]
 Description=LLM Bridge
@@ -66,7 +68,7 @@ services:
     image: ghcr.io/aeswibon/llm-bridge:latest
     container_name: llm-bridge
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - CURSOR_API_KEY=${CURSOR_API_KEY}
     restart: unless-stopped
@@ -80,7 +82,7 @@ services:
     image: ghcr.io/aeswibon/llm-bridge:latest
     container_name: llm-bridge
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN}
     restart: unless-stopped
@@ -94,7 +96,7 @@ services:
     image: ghcr.io/aeswibon/llm-bridge:latest
     container_name: llm-bridge
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - WINDSURF_TOKEN=${WINDSURF_TOKEN}
     volumes:
@@ -112,7 +114,7 @@ services:
     image: ghcr.io/aeswibon/llm-bridge:latest
     container_name: llm-bridge
     ports:
-      - "3849:3849"
+      - '3849:3849'
     environment:
       - CURSOR_API_KEY=${CURSOR_API_KEY}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
@@ -126,14 +128,14 @@ services:
 
 All config values can be set via environment variables:
 
-| Variable | Description |
-|----------|-------------|
-| `LLM_BRIDGE_PORT` | Server port (default: 3849) |
-| `LLM_BRIDGE_HOST` | Server host (default: 127.0.0.1) |
-| `CURSOR_API_KEY` | Cursor API key |
-| `GITHUB_TOKEN` | GitHub token for Copilot |
-| `WINDSURF_TOKEN` | Windsurf token |
-| `WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path |
+| Variable                        | Description                      |
+| ------------------------------- | -------------------------------- |
+| `LLM_BRIDGE_PORT`               | Server port (default: 3849)      |
+| `LLM_BRIDGE_HOST`               | Server host (default: 127.0.0.1) |
+| `CURSOR_API_KEY`                | Cursor API key                   |
+| `GITHUB_TOKEN`                  | GitHub token for Copilot         |
+| `WINDSURF_TOKEN`                | Windsurf token                   |
+| `WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path      |
 
 ---
 
@@ -145,12 +147,14 @@ brew install llm-bridge
 ```
 
 **Setup:**
+
 ```bash
 llm-bridge init
 llm-bridge start
 ```
 
 **Auto-start:**
+
 ```bash
 llm-bridge install-daemon
 ```
@@ -186,6 +190,7 @@ sudo mv llm-bridge /usr/local/bin/
 ```
 
 **Setup:**
+
 ```bash
 llm-bridge init
 llm-bridge start

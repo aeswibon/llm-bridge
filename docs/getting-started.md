@@ -46,6 +46,7 @@ llm-bridge init
 ```
 
 This interactive wizard will:
+
 - Ask which providers you want to enable (cursor, copilot, windsurf)
 - Collect your API tokens
 - Generate a config file at `~/.config/llm-bridge/config.json`
@@ -120,6 +121,7 @@ Or configure them in `~/.config/llm-bridge/config.json`:
 ```
 
 Model IDs use a `provider/model` prefix format:
+
 - `cursor/composer-2` — Cursor Composer
 - `copilot/gpt-4o-copilot` — GitHub Copilot GPT-4o
 - `windsurf/claude-4.5-sonnet` — Windsurf Claude
@@ -151,11 +153,11 @@ For detailed provider configuration, authentication, and model catalogs, see the
 
 Quick overview:
 
-| Provider | Auth | Models |
-|----------|------|--------|
-| Cursor | API key from [Cursor dashboard](https://cursor.com/dashboard/cloud-agents) | `composer-2`, `composer-fast`, `claude-3.5-sonnet`, `gpt-4o` |
-| GitHub Copilot | GitHub token with Copilot access | `gpt-4o-copilot`, `claude-3.5-sonnet-copilot` |
-| Windsurf | Windsurf token (OAuth or direct) | `claude-4.5-sonnet`, `claude-4.5-opus`, `gpt-5.2`, `gpt-5.2-codex`, `gpt-4o`, `gemini-3.0-pro`, `gemini-3.0-flash`, `swe-1.5` |
+| Provider       | Auth                                                                       | Models                                                                                                                        |
+| -------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Cursor         | API key from [Cursor dashboard](https://cursor.com/dashboard/cloud-agents) | `composer-2`, `composer-fast`, `claude-3.5-sonnet`, `gpt-4o`                                                                  |
+| GitHub Copilot | GitHub token with Copilot access                                           | `gpt-4o-copilot`, `claude-3.5-sonnet-copilot`                                                                                 |
+| Windsurf       | Windsurf token (OAuth or direct)                                           | `claude-4.5-sonnet`, `claude-4.5-opus`, `gpt-5.2`, `gpt-5.2-codex`, `gpt-4o`, `gemini-3.0-pro`, `gemini-3.0-flash`, `swe-1.5` |
 
 ## Running as a Service
 
@@ -226,31 +228,31 @@ Config file: `~/.config/llm-bridge/config.json`
 
 All config values can be overridden:
 
-| Variable | Description |
-|----------|-------------|
-| `LLM_BRIDGE_PORT` | Server port (default: 3849) |
-| `LLM_BRIDGE_HOST` | Server host (default: 127.0.0.1) |
-| `LLM_BRIDGE_CONFIG` | Full config as JSON string |
-| `CURSOR_API_KEY` | Cursor API key |
-| `GITHUB_TOKEN` | GitHub token for Copilot |
-| `WINDSURF_TOKEN` | Windsurf token |
-| `WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path |
+| Variable                        | Description                      |
+| ------------------------------- | -------------------------------- |
+| `LLM_BRIDGE_PORT`               | Server port (default: 3849)      |
+| `LLM_BRIDGE_HOST`               | Server host (default: 127.0.0.1) |
+| `LLM_BRIDGE_CONFIG`             | Full config as JSON string       |
+| `CURSOR_API_KEY`                | Cursor API key                   |
+| `GITHUB_TOKEN`                  | GitHub token for Copilot         |
+| `WINDSURF_TOKEN`                | Windsurf token                   |
+| `WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path      |
 
 For full configuration options, see [Configuration](configuration.md).
 
 ## CLI Reference
 
-| Command | Description |
-|---------|-------------|
-| `llm-bridge init` | Interactive setup wizard |
-| `llm-bridge start` | Launch bridge server |
-| `llm-bridge configure` | Inject provider config into OpenCode |
-| `llm-bridge doctor` | Run diagnostics |
-| `llm-bridge install-daemon` | Install macOS LaunchAgent |
-| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent |
-| `llm-bridge daemon status` | Check Windsurf daemon status |
-| `llm-bridge daemon download` | Download Windsurf daemon |
-| `llm-bridge daemon locate` | Find Windsurf daemon path |
+| Command                       | Description                          |
+| ----------------------------- | ------------------------------------ |
+| `llm-bridge init`             | Interactive setup wizard             |
+| `llm-bridge start`            | Launch bridge server                 |
+| `llm-bridge configure`        | Inject provider config into OpenCode |
+| `llm-bridge doctor`           | Run diagnostics                      |
+| `llm-bridge install-daemon`   | Install macOS LaunchAgent            |
+| `llm-bridge uninstall-daemon` | Remove macOS LaunchAgent             |
+| `llm-bridge daemon status`    | Check Windsurf daemon status         |
+| `llm-bridge daemon download`  | Download Windsurf daemon             |
+| `llm-bridge daemon locate`    | Find Windsurf daemon path            |
 
 For the complete CLI reference, see [CLI Reference](cli-reference.md).
 
@@ -271,6 +273,7 @@ GET /v1/models
 ```
 
 Response:
+
 ```json
 {
   "data": [
