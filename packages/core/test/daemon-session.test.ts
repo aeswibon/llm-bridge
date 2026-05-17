@@ -55,9 +55,21 @@ describe('DaemonBridgeSession', () => {
 
       setTimeout(() => {
         daemon.emitOutput([
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/chunk', params: { id: 1, delta: { content: 'Hello' } } }),
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/chunk', params: { id: 1, delta: { content: ' world' } } }),
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/done', params: { id: 1, finishReason: 'stop' } }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/chunk',
+            params: { id: 1, delta: { content: 'Hello' } },
+          }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/chunk',
+            params: { id: 1, delta: { content: ' world' } },
+          }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/done',
+            params: { id: 1, finishReason: 'stop' },
+          }),
         ]);
       }, 10);
 
@@ -87,7 +99,11 @@ describe('DaemonBridgeSession', () => {
               },
             },
           }),
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/done', params: { id: 1, finishReason: 'tool_calls' } }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/done',
+            params: { id: 1, finishReason: 'tool_calls' },
+          }),
         ]);
       }, 10);
 
@@ -166,7 +182,11 @@ describe('DaemonBridgeSession', () => {
 
       setTimeout(() => {
         daemon.emitOutput([
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/done', params: { id: 1, finishReason: 'stop' } }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/done',
+            params: { id: 1, finishReason: 'stop' },
+          }),
         ]);
       }, 20);
 
@@ -312,7 +332,11 @@ describe('DaemonBridgeSession', () => {
     it('kills the daemon process', async () => {
       setTimeout(() => {
         daemon.emitOutput([
-          JSON.stringify({ jsonrpc: '2.0', method: 'chat/done', params: { id: 1, finishReason: 'stop' } }),
+          JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'chat/done',
+            params: { id: 1, finishReason: 'stop' },
+          }),
         ]);
       }, 10);
 

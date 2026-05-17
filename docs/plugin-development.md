@@ -45,7 +45,14 @@ type StreamChunk =
 For providers with a cloud API (Cursor, Copilot):
 
 ```typescript
-import type { BridgePlugin, BridgeSession, ModelInfo, Message, ToolDefinition, StreamChunk } from '@llm-bridge/core';
+import type {
+  BridgePlugin,
+  BridgeSession,
+  ModelInfo,
+  Message,
+  ToolDefinition,
+  StreamChunk,
+} from '@llm-bridge/core';
 
 export class MyHttpPlugin implements BridgePlugin {
   name = 'my-provider';
@@ -78,7 +85,10 @@ export class MyHttpPlugin implements BridgePlugin {
 }
 
 class MyHttpSession implements BridgeSession {
-  constructor(private token: string, private model: string) {}
+  constructor(
+    private token: string,
+    private model: string,
+  ) {}
 
   async *send(messages: Message[], tools?: ToolDefinition[]): AsyncIterable<StreamChunk> {
     const response = await fetch('https://api.provider.com/chat', {
@@ -162,6 +172,7 @@ export class MyDaemonSession extends DaemonBridgeSession {
 ```
 
 `DaemonBridgeSession` handles:
+
 - Spawning the daemon process
 - Sending JSON-RPC requests over stdin
 - Parsing JSON-RPC responses from stdout
@@ -189,9 +200,7 @@ export class MyBridgePlugin implements BridgePlugin {
   async listModels(config: Record<string, string>): Promise<ModelInfo[]> {
     const token = config.MY_PROVIDER_TOKEN;
     if (!token) throw new Error('Missing MY_PROVIDER_TOKEN');
-    return [
-      { id: 'model-1', name: 'Model 1', capabilities: { streaming: true, tools: true } },
-    ];
+    return [{ id: 'model-1', name: 'Model 1', capabilities: { streaming: true, tools: true } }];
   }
 
   async createSession(config: Record<string, string>, model: string): Promise<BridgeSession> {
@@ -331,12 +340,13 @@ When a plugin is registered, its `name` property automatically becomes the model
 
 ```typescript
 export class MyBridgePlugin implements BridgePlugin {
-  name = 'my-provider';  // ← This becomes the prefix
+  name = 'my-provider'; // ← This becomes the prefix
   // ...
 }
 ```
 
 Models from this plugin will be exposed as:
+
 - `my-provider/model-1`
 - `my-provider/model-2`
 
