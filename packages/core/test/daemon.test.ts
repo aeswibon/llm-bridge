@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createDaemonManager } from '../src/daemon.js';
-import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, chmodSync, constants, existsSync, mkdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -33,6 +33,7 @@ describe('createDaemonManager', () => {
     it('finds binary from envVar', async () => {
       const binaryPath = join(testDir, 'test-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'test-binary',
@@ -52,6 +53,7 @@ describe('createDaemonManager', () => {
     it('finds binary from knownPaths', async () => {
       const binaryPath = join(testDir, 'known-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'known-binary',
@@ -69,6 +71,7 @@ describe('createDaemonManager', () => {
       mkdirSync(daemonsDir, { recursive: true });
       const binaryPath = join(daemonsDir, 'managed-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'managed-binary',
@@ -87,7 +90,9 @@ describe('createDaemonManager', () => {
       const envPath = join(testDir, 'env-binary');
       const knownPath = join(testDir, 'known-binary');
       writeFileSync(envPath, '#!/bin/bash\necho env');
+      chmodSync(envPath, 0o755);
       writeFileSync(knownPath, '#!/bin/bash\necho known');
+      chmodSync(knownPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'test-binary',
@@ -102,6 +107,45 @@ describe('createDaemonManager', () => {
       delete process.env.TEST_BINARY_PATH;
 
       expect(result).toBe(envPath);
+    });
+
+    it('skips non-executable files in knownPaths', async () => {
+      const nonExecPath = join(testDir, 'non-exec-binary');
+      const execPath = join(testDir, 'exec-binary');
+      writeFileSync(nonExecPath, '#!/bin/bash\necho nonexec');
+      chmodSync(nonExecPath, 0o644);
+      writeFileSync(execPath, '#!/bin/bash\necho exec');
+      chmodSync(execPath, 0o755);
+
+      const manager = createDaemonManager({
+        binaryName: 'test-binary',
+        downloadUrl: 'https://example.com/binary',
+        checksum: 'abc123',
+        knownPaths: [nonExecPath, execPath],
+      });
+
+      const result = await manager.locate();
+      expect(result).toBe(execPath);
+    });
+
+    it('skips non-executable file from envVar', async () => {
+      const nonExecPath = join(testDir, 'non-exec-env-binary');
+      writeFileSync(nonExecPath, '#!/bin/bash\necho nonexec');
+      chmodSync(nonExecPath, 0o644);
+
+      const manager = createDaemonManager({
+        binaryName: 'test-binary',
+        downloadUrl: 'https://example.com/binary',
+        checksum: 'abc123',
+        knownPaths: [],
+        envVar: 'TEST_BINARY_PATH',
+      });
+
+      process.env.TEST_BINARY_PATH = nonExecPath;
+      const result = await manager.locate();
+      delete process.env.TEST_BINARY_PATH;
+
+      expect(result).toBeNull();
     });
   });
 
@@ -274,6 +318,53 @@ describe('createDaemonManager', () => {
 
       await expect(manager.download()).rejects.toThrow('Download timeout (30s)');
     }, 35000);
+
+    it('rejects redirect to file:// protocol', async () => {
+      await startServer((_req, res) => {
+        res.writeHead(302, { Location: 'file:///etc/passwd' });
+        res.end();
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'scheme-daemon',
+        downloadUrl: `http://localhost:${port}/binary`,
+        checksum: 'abc123',
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      await expect(manager.download()).rejects.toThrow('Redirect to unsupported protocol: file:');
+    });
+
+    it('rejects when download exceeds size limit', async () => {
+      const chunkSize = 1 * 1024 * 1024; // 1MB chunks
+      let totalSent = 0;
+
+      await startServer((_req, res) => {
+        res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
+        const sendChunk = () => {
+          totalSent += chunkSize;
+          if (!res.write(Buffer.alloc(chunkSize, 0))) {
+            res.once('drain', sendChunk);
+          } else if (totalSent < 10 * 1024 * 1024) {
+            setImmediate(sendChunk);
+          } else {
+            res.end();
+          }
+        };
+        sendChunk();
+      });
+
+      const manager = createDaemonManager({
+        binaryName: 'big-daemon',
+        downloadUrl: `http://localhost:${port}/binary`,
+        checksum: 'abc123',
+        knownPaths: [],
+        daemonsDir: testDir,
+      });
+
+      await expect(manager.download()).rejects.toThrow('Download exceeds maximum size');
+    }, 15000);
   });
 
   describe('healthCheck', () => {
@@ -316,6 +407,7 @@ describe('createDaemonManager', () => {
     it('returns true when binary exists and no port provided', async () => {
       const binaryPath = join(testDir, 'test-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'test-binary',
@@ -335,6 +427,7 @@ describe('createDaemonManager', () => {
     it('returns true when health endpoint responds 200', async () => {
       const binaryPath = join(testDir, 'test-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       await startHealthServer((req, res) => {
         if (req.url === '/health') {
@@ -364,6 +457,7 @@ describe('createDaemonManager', () => {
     it('returns false when health endpoint responds non-200', async () => {
       const binaryPath = join(testDir, 'test-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       await startHealthServer((_req, res) => {
         res.writeHead(500);
@@ -388,6 +482,7 @@ describe('createDaemonManager', () => {
     it('returns false when health endpoint is unreachable', async () => {
       const binaryPath = join(testDir, 'test-binary');
       writeFileSync(binaryPath, '#!/bin/bash\necho hello');
+      chmodSync(binaryPath, 0o755);
 
       const manager = createDaemonManager({
         binaryName: 'test-binary',
