@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { accessSync, chmodSync, constants, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir, platform, arch } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -33,18 +33,39 @@ export function createDaemonManager(config: {
       // 1. Check envVar
       if (config.envVar && process.env[config.envVar]) {
         const envPath = process.env[config.envVar]!;
-        if (existsSync(envPath)) return envPath;
+        if (existsSync(envPath)) {
+          try {
+            accessSync(envPath, constants.X_OK);
+            return envPath;
+          } catch {
+            // Not executable, skip
+          }
+        }
       }
 
       // 2. Check knownPaths
       for (const p of config.knownPaths) {
-        if (existsSync(p)) return p;
+        if (existsSync(p)) {
+          try {
+            accessSync(p, constants.X_OK);
+            return p;
+          } catch {
+            // Not executable, skip
+          }
+        }
       }
 
       // 3. Check ~/.llm-bridge/daemons/
       const daemonsDir = getDaemonsDir();
       const managedPath = join(daemonsDir, config.binaryName);
-      if (existsSync(managedPath)) return managedPath;
+      if (existsSync(managedPath)) {
+        try {
+          accessSync(managedPath, constants.X_OK);
+          return managedPath;
+        } catch {
+          // Not executable, skip
+        }
+      }
 
       return null;
     },
@@ -59,6 +80,8 @@ export function createDaemonManager(config: {
         .replace('{arch}', arch());
 
       const MAX_REDIRECTS = 5;
+      const MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024; // 500MB
+      let currentReq: ReturnType<typeof httpRequest> | null = null;
 
       const followRedirect = (
         currentUrl: string,
@@ -68,7 +91,7 @@ export function createDaemonManager(config: {
           const parsed = new URL(currentUrl);
           const requestFn = parsed.protocol === 'https:' ? httpsRequest : httpRequest;
 
-          const req = requestFn(currentUrl, (res: IncomingMessage) => {
+          currentReq = requestFn(currentUrl, (res: IncomingMessage) => {
             if (
               res.statusCode === 301 ||
               res.statusCode === 302 ||
@@ -81,9 +104,14 @@ export function createDaemonManager(config: {
               }
               const location = res.headers.location;
               if (location) {
-                const resolved = new URL(location, currentUrl).href;
+                const redirectUrl = new URL(location, currentUrl);
+                if (redirectUrl.protocol !== 'http:' && redirectUrl.protocol !== 'https:') {
+                  reject(new Error(`Redirect to unsupported protocol: ${redirectUrl.protocol}`));
+                  res.resume();
+                  return;
+                }
                 res.resume();
-                followRedirect(resolved, redirectCount + 1)
+                followRedirect(redirectUrl.href, redirectCount + 1)
                   .then(resolve)
                   .catch(reject);
               } else {
@@ -98,33 +126,49 @@ export function createDaemonManager(config: {
             }
 
             const chunks: Buffer[] = [];
-            res.on('data', (chunk: Buffer) => chunks.push(chunk));
+            let totalSize = 0;
+            res.on('data', (chunk: Buffer) => {
+              totalSize += chunk.length;
+              if (totalSize > MAX_DOWNLOAD_SIZE) {
+                reject(new Error(`Download exceeds maximum size (${MAX_DOWNLOAD_SIZE} bytes)`));
+                res.destroy();
+                return;
+              }
+              chunks.push(chunk);
+            });
             res.on('end', () => {
               resolve(Buffer.concat(chunks));
             });
           });
 
-          req.on('error', reject);
-          req.end();
+          currentReq.on('error', reject);
+          currentReq.end();
         });
 
       const downloadPromise = followRedirect(url, 0);
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Download timeout (30s)')), 30000);
+        setTimeout(() => {
+          currentReq?.destroy();
+          reject(new Error('Download timeout (30s)'));
+        }, 30000);
       });
 
       return Promise.race([downloadPromise, timeoutPromise]).then((data) => {
-        writeFileSync(destPath, data);
-        chmodSync(destPath, 0o755);
-        const hash = createHash('sha256').update(data).digest('hex');
-        if (hash !== config.checksum) {
-          unlinkSync(destPath);
-          throw new Error(
-            `Checksum mismatch: expected ${config.checksum}, got ${hash}`,
-          );
+        try {
+          writeFileSync(destPath, data);
+          const hash = createHash('sha256').update(data).digest('hex');
+          if (hash !== config.checksum) {
+            throw new Error(
+              `Checksum mismatch: expected ${config.checksum}, got ${hash}`,
+            );
+          }
+          chmodSync(destPath, 0o755);
+          return destPath;
+        } catch (err) {
+          try { unlinkSync(destPath); } catch {}
+          throw err;
         }
-        return destPath;
       });
     },
 
