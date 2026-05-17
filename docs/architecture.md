@@ -2,7 +2,7 @@
 
 ## Overview
 
-llm-bridge is a local HTTP server that translates OpenAI-compatible API requests into provider-specific calls (Cursor SDK, etc.), enabling any OpenAI-format client to use any AI IDE's model catalog.
+llm-bridge is a local HTTP server that translates OpenAI-compatible API requests into provider-specific calls (Cursor SDK, etc.), enabling any OpenAI-format client to use any AI IDE's model catalog. Multiple plugins can be registered simultaneously, with requests routed by model ID prefix.
 
 ## System Diagram
 
@@ -13,20 +13,22 @@ llm-bridge is a local HTTP server that translates OpenAI-compatible API requests
 │   client)    │ ◄──────────────────────────────── │   (port 3849)    │
 └─────────────┘      SSE stream / JSON response    └────────┬─────────┘
                                                              │
-                                                    Plugin Router
+                                                    Model Prefix Router
                                                              │
-                          ┌──────────────────────────────────┼──────────────────────────────────┐
-                          │                                  │                                  │
-                   ┌──────▼──────┐                    ┌──────▼──────┐                    ┌──────▼──────┐
-                   │  Cursor      │                    │  Copilot     │                    │  Windsurf    │
-                   │  (HTTP)      │                    │  (HTTP)      │                    │  (Daemon)    │
-                   └──────┬──────┘                    └──────┬──────┘                    └──────┬──────┘
-                          │                                  │                                  │
-                   ┌──────▼──────┐                    ┌──────▼──────┐                    ┌──────▼──────┐
-                   │ Cursor API  │                    │ Copilot API │                    │ Language    │
-                   │ (cloud)     │                    │ (cloud)     │                    │ Server      │
-                   └─────────────┘                    └─────────────┘                    │ (stdio)     │
-                                                                                        └─────────────┘
+              ┌──────────────────────────┬───────────────────┼───────────────────┬──────────────────────────┐
+              │                          │                   │                   │                          │
+       cursor/* prefix            copilot/* prefix           │            windsurf/* prefix           default (unprefixed)
+              │                          │                   │                   │                          │
+       ┌──────▼──────┐            ┌──────▼──────┐            │            ┌──────▼──────┐            ┌──────▼──────┐
+       │  Cursor      │            │  Copilot     │            │            │  Windsurf    │            │ defaultPlugin│
+       │  (HTTP)      │            │  (HTTP)      │            │            │  (Daemon)    │            │   fallback  │
+       └──────┬──────┘            └──────┬──────┘            │            └──────┬──────┘            └─────────────┘
+              │                          │                   │                   │
+       ┌──────▼──────┐            ┌──────▼──────┐            │            ┌──────▼──────┐
+       │ Cursor API  │            │ Copilot API │            │            │ Language    │
+       │ (cloud)     │            │ (cloud)     │            │            │ Server      │
+       └─────────────┘            └─────────────┘            │            │ (stdio)     │
+                                                             │            └─────────────┘
 ```
 
 ## Components
@@ -40,6 +42,7 @@ The HTTP server and shared infrastructure:
 - **Formatter** — Translates provider stream chunks into OpenAI SSE format
 - **Session Store** — In-memory session management with TTL cleanup
 - **Plugin Registry** — Loads, activates, and tracks plugin health
+- **Model Router** — Resolves model ID prefixes to registered plugins
 - **Config** — File-based config (`~/.config/llm-bridge/config.json`) with env var overrides
 
 ### Plugins
@@ -74,9 +77,9 @@ Plugins that spawn a local daemon binary and communicate via stdio/JSON-RPC. Exa
 
 ```
 Server ──spawn()──► Daemon Process
-         ──stdin──► JSON-RPC request
-         ◄─stdout── JSON-RPC response (chunks)
-         ──kill()──► Daemon cleanup
+          ──stdin──► JSON-RPC request
+          ◄─stdout── JSON-RPC response (chunks)
+          ──kill()──► Daemon cleanup
 ```
 
 - Uses `DaemonManager` for binary discovery (`locate()`), download (`download()`), and process management (`spawn()`)
@@ -95,6 +98,8 @@ Command-line interface for setup and management:
 - `install-daemon` / `uninstall-daemon` — macOS LaunchAgent management
 - `daemon status` / `daemon download` / `daemon locate` — Windsurf daemon management
 
+The CLI config uses `defaultPlugin` to specify which plugin handles unprefixed model IDs.
+
 ### MCP Server (`@llm-bridge/mcp`)
 
 Stdio MCP server for Cursor IDE integration:
@@ -103,15 +108,60 @@ Stdio MCP server for Cursor IDE integration:
 - `list_models` — Available models
 - `generate_opencode_config` — Provider fragment generator
 
+## Model Routing
+
+Model IDs are resolved to plugins using a prefix-based routing system:
+
+### Prefix Resolution Logic
+
+1. **Prefixed model ID** (e.g., `cursor/composer-2`):
+   - Extract the prefix (`cursor`) before the first `/`
+   - Look up the registered plugin with that name
+   - Strip the prefix and pass the remainder (`composer-2`) to the plugin
+   - If the prefix doesn't match any registered plugin, return `400 bad_request`
+
+2. **Double-prefixed model ID** (e.g., `llm-bridge/cursor/composer-2`):
+   - The first segment is the provider name in the client config
+   - The second segment is the plugin prefix
+   - Strip both and pass the remainder to the plugin
+
+3. **Unprefixed model ID** (e.g., `composer-2`):
+   - Route to the `defaultPlugin` configured in `~/.config/llm-bridge/config.json`
+   - If no `defaultPlugin` is set, return `400 bad_request`
+
+### Routing Table
+
+| Model ID | Prefix | Target Plugin | Model Passed to Plugin |
+|----------|--------|---------------|------------------------|
+| `cursor/composer-2` | `cursor` | `@llm-bridge/cursor` | `composer-2` |
+| `copilot/gpt-4o-copilot` | `copilot` | `@llm-bridge/copilot` | `gpt-4o-copilot` |
+| `windsurf/claude-4.5-sonnet` | `windsurf` | `@llm-bridge/windsurf` | `claude-4.5-sonnet` |
+| `composer-2` | (none) | `defaultPlugin` | `composer-2` |
+
+### Model Listing
+
+`GET /v1/models` returns the union of all models from all registered plugins, each prefixed with its plugin name:
+
+```json
+{
+  "data": [
+    { "id": "cursor/composer-2", "object": "model", "created": 0, "owned_by": "cursor" },
+    { "id": "copilot/gpt-4o-copilot", "object": "model", "created": 0, "owned_by": "copilot" },
+    { "id": "windsurf/claude-4.5-sonnet", "object": "model", "created": 0, "owned_by": "windsurf" }
+  ]
+}
+```
+
 ## Data Flow
 
-1. Client sends `POST /v1/chat/completions` with OpenAI-format body
+1. Client sends `POST /v1/chat/completions` with OpenAI-format body and a `model` field
 2. Server validates request via Zod parser
-3. Server routes to active plugin's `createSession()`
-4. Plugin creates provider-specific session
-5. Server iterates session's `AsyncIterable<StreamChunk>`
-6. Each chunk is formatted as OpenAI SSE and written to response
-7. On completion, session is disposed
+3. **Model Router** extracts the prefix from the model ID and resolves it to a registered plugin
+4. Server routes to the resolved plugin's `createSession()` with the stripped model ID
+5. Plugin creates provider-specific session
+6. Server iterates session's `AsyncIterable<StreamChunk>`
+7. Each chunk is formatted as OpenAI SSE and written to response
+8. On completion, session is disposed
 
 ## Error Handling
 
@@ -122,3 +172,6 @@ Stdio MCP server for Cursor IDE integration:
 | Plugin crash            | `500 plugin_error`, marked unhealthy              |
 | Session timeout (30min) | Auto-dispose, new session on next request         |
 | Tool call rejected      | Warning logged, text-only fallback (lenient mode) |
+| Unknown model prefix    | `400 bad_request: unknown prefix "xyz"`           |
+| No default plugin       | `400 bad_request: no default plugin configured`   |
+| Plugin not registered   | `400 bad_request: plugin "xyz" not registered`    |

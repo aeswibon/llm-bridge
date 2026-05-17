@@ -46,8 +46,8 @@ llm-bridge init
 ```
 
 This interactive wizard will:
-- Ask which provider you want to use (cursor, copilot, windsurf)
-- Collect your API token
+- Ask which providers you want to enable (cursor, copilot, windsurf)
+- Collect your API tokens
 - Generate a config file at `~/.config/llm-bridge/config.json`
 
 ### 2. Start the bridge
@@ -76,98 +76,86 @@ Add to your client's provider config:
 {
   "provider": {
     "llm-bridge": {
-      "name": "llm-bridge",
-      "baseURL": "http://127.0.0.1:3849",
-      "apiKey": "placeholder",
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LLM Bridge",
+      "options": {
+        "apiKey": "bridge-local",
+        "baseURL": "http://127.0.0.1:3849/v1"
+      },
       "models": {
-        "composer-2": { "name": "composer-2" }
+        "cursor/composer-2": { "name": "Cursor Composer 2" },
+        "copilot/gpt-4o-copilot": { "name": "GPT-4o (Copilot)" },
+        "windsurf/claude-4.5-sonnet": { "name": "Claude 4.5 Sonnet (Windsurf)" }
       }
     }
   }
 }
 ```
 
-### 4. Verify
+### 4. Multi-Provider Quick Start
+
+Enable all three providers simultaneously by setting credentials for each:
 
 ```bash
-curl http://127.0.0.1:3849/health
-# {"status":"ok"}
+# Set environment variables
+export CURSOR_API_KEY=cursor_your_key
+export GITHUB_TOKEN=your_github_token
+export WINDSURF_TOKEN=your_windsurf_token
 
-curl http://127.0.0.1:3849/v1/models
-# {"data": [{"id": "composer-2", ...}]}
+# Start with all providers active
+llm-bridge start
 ```
 
-## Provider Setup
+Or configure them in `~/.config/llm-bridge/config.json`:
 
-### Cursor
-
-**Auth:** API key from [Cursor dashboard](https://cursor.com/dashboard/cloud-agents)
-
-```bash
-# During init, select "cursor" and paste your API key
-llm-bridge init
-
-# Or set manually in config
-# ~/.config/llm-bridge/config.json
+```json
 {
-  "activePlugin": "cursor",
+  "defaultPlugin": "cursor",
   "plugins": {
-    "cursor": {
-      "CURSOR_API_KEY": "cursor_your_key_here"
-    }
+    "cursor": { "CURSOR_API_KEY": "cursor_..." },
+    "copilot": { "GITHUB_TOKEN": "ghp_..." },
+    "windsurf": { "WINDSURF_TOKEN": "windsurf_..." }
   }
 }
 ```
 
-**Available models:** `composer-2`, `composer-fast`, `claude-3.5-sonnet`, `gpt-4o`
+Model IDs use a `provider/model` prefix format:
+- `cursor/composer-2` — Cursor Composer
+- `copilot/gpt-4o-copilot` — GitHub Copilot GPT-4o
+- `windsurf/claude-4.5-sonnet` — Windsurf Claude
 
-### GitHub Copilot
-
-**Auth:** GitHub token with Copilot access
-
-```bash
-# During init, select "copilot" and enter your GitHub token
-llm-bridge init
-
-# Or set via environment variable
-export GITHUB_TOKEN=your_github_token
-```
-
-**Available models:** `gpt-4o-copilot`, `claude-3.5-sonnet-copilot`
-
-### Windsurf
-
-**Auth:** Windsurf token (OAuth or direct)
+### 5. Verify your setup
 
 ```bash
-# During init, select "windsurf" and enter your token
-llm-bridge init
+# Check health
+curl http://127.0.0.1:3849/health
+# {"status":"ok"}
 
-# Or set via environment variable
-export WINDSURF_TOKEN=your_windsurf_token
+# List available models
+curl http://127.0.0.1:3849/v1/models
+# {"data": [{"id": "cursor/composer-2", ...}, {"id": "copilot/gpt-4o-copilot", ...}, ...]}
+
+# Test a chat completion
+curl http://127.0.0.1:3849/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "cursor/composer-2",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "stream": false
+  }'
 ```
 
-**Available models:** `claude-4.5-sonnet`, `claude-4.5-opus`, `gpt-5.2`, `gpt-5.2-codex`, `gpt-4o`, `gemini-3.0-pro`, `gemini-3.0-flash`, `swe-1.5`
+## Provider Setup
 
-**Daemon management:**
+For detailed provider configuration, authentication, and model catalogs, see the [CLI Reference](cli-reference.md).
 
-Windsurf uses a local language server daemon. llm-bridge will automatically find it if Windsurf is installed.
+Quick overview:
 
-```bash
-# Check if daemon is found
-llm-bridge daemon status
-
-# Download daemon manually
-llm-bridge daemon download
-
-# Show daemon path
-llm-bridge daemon locate
-```
-
-The daemon is searched for in this order:
-1. `WINDSURF_LANGUAGE_SERVER_PATH` environment variable
-2. macOS default: `/Applications/Windsurf.app/Contents/Resources/language_server`
-3. `~/.llm-bridge/daemons/language_server` (downloaded)
+| Provider | Auth | Models |
+|----------|------|--------|
+| Cursor | API key from [Cursor dashboard](https://cursor.com/dashboard/cloud-agents) | `composer-2`, `composer-fast`, `claude-3.5-sonnet`, `gpt-4o` |
+| GitHub Copilot | GitHub token with Copilot access | `gpt-4o-copilot`, `claude-3.5-sonnet-copilot` |
+| Windsurf | Windsurf token (OAuth or direct) | `claude-4.5-sonnet`, `claude-4.5-opus`, `gpt-5.2`, `gpt-5.2-codex`, `gpt-4o`, `gemini-3.0-pro`, `gemini-3.0-flash`, `swe-1.5` |
 
 ## Running as a Service
 
@@ -205,13 +193,15 @@ docker run -d \
   ghcr.io/aeswibon/llm-bridge:latest
 ```
 
+For production deployment options, see [Deployment](deployment.md).
+
 ## Configuration
 
 Config file: `~/.config/llm-bridge/config.json`
 
 ```json
 {
-  "activePlugin": "cursor",
+  "defaultPlugin": "cursor",
   "port": 3849,
   "host": "127.0.0.1",
   "plugins": {
@@ -230,6 +220,8 @@ Config file: `~/.config/llm-bridge/config.json`
 }
 ```
 
+**Note:** `activePlugin` has been renamed to `defaultPlugin`. The old key still works but is deprecated.
+
 ### Environment Variables
 
 All config values can be overridden:
@@ -244,6 +236,8 @@ All config values can be overridden:
 | `WINDSURF_TOKEN` | Windsurf token |
 | `WINDSURF_LANGUAGE_SERVER_PATH` | Custom Windsurf daemon path |
 
+For full configuration options, see [Configuration](configuration.md).
+
 ## CLI Reference
 
 | Command | Description |
@@ -257,6 +251,8 @@ All config values can be overridden:
 | `llm-bridge daemon status` | Check Windsurf daemon status |
 | `llm-bridge daemon download` | Download Windsurf daemon |
 | `llm-bridge daemon locate` | Find Windsurf daemon path |
+
+For the complete CLI reference, see [CLI Reference](cli-reference.md).
 
 ## API Reference
 
@@ -278,7 +274,9 @@ Response:
 ```json
 {
   "data": [
-    { "id": "composer-2", "object": "model", "created": 0, "owned_by": "cursor" }
+    { "id": "cursor/composer-2", "object": "model", "created": 0, "owned_by": "cursor" },
+    { "id": "copilot/gpt-4o-copilot", "object": "model", "created": 0, "owned_by": "copilot" },
+    { "id": "windsurf/claude-4.5-sonnet", "object": "model", "created": 0, "owned_by": "windsurf" }
   ]
 }
 ```
@@ -290,7 +288,7 @@ POST /v1/chat/completions
 Content-Type: application/json
 
 {
-  "model": "composer-2",
+  "model": "cursor/composer-2",
   "messages": [
     { "role": "user", "content": "Hello" }
   ],
@@ -304,4 +302,7 @@ Response: SSE stream of OpenAI-compatible chunks.
 
 - Read [Architecture](architecture.md) for system design details
 - Read [Plugin Development](plugin-development.md) to build your own provider
+- Read [CLI Reference](cli-reference.md) for all commands
+- Read [Deployment](deployment.md) for production setups
+- Read [Configuration](configuration.md) for all config options
 - Check [Troubleshooting](troubleshooting.md) for common issues
