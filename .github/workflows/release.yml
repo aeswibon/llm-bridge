@@ -70,49 +70,49 @@ jobs:
       - run: pnpm build
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/cursor
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/mcp
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/copilot
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/windsurf
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
-          sleep 15
+          npm publish --access public || (sleep 30 && npm publish --access public)
+          sleep 30
         working-directory: packages/oauth
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - run: |
-          npm publish --access public
+          npm publish --access public || (sleep 30 && npm publish --access public)
         working-directory: cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
