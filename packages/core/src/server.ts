@@ -81,7 +81,8 @@ export class BridgeServer {
     }
 
     try {
-      const models: any[] = [];
+      const models: { id: string; object: string; created: number; owned_by: string }[] = [];
+      const now = Math.floor(Date.now() / 1000);
       for (const plugin of allPlugins) {
         const config = this.config.plugins[plugin.name] ?? {};
         const pluginModels = await plugin.listModels(config);
@@ -89,7 +90,7 @@ export class BridgeServer {
           models.push({
             id: `${plugin.name}/${m.id}`,
             object: 'model',
-            created: Math.floor(Date.now() / 1000),
+            created: now,
             owned_by: plugin.name,
           });
         }
@@ -146,7 +147,8 @@ export class BridgeServer {
 
     try {
       const config = this.config.plugins[plugin.name] ?? {};
-      const session = await plugin.createSession(config, model);
+      const modelId = model.includes('/') ? model.slice(model.indexOf('/') + 1) : model;
+      const session = await plugin.createSession(config, modelId);
       const sessionId = req.headers['x-session-id'] as string | undefined;
       this.sessions.set(sessionId ?? crypto.randomUUID(), session);
 
