@@ -6,3 +6,4 @@ export { formatStreamChunk, formatCompletion } from './formatter.js';
 export { PluginRegistry } from './registry.js';
 export { loadConfig, saveConfig, configPath } from './config.js';
 export { createDaemonManager, type DaemonManager } from './daemon.js';
+export { DaemonBridgeSession } from './daemon-session.js';
