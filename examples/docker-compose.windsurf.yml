@@ -1,0 +1,12 @@
+services:
+  llm-bridge:
+    image: ghcr.io/aeswibon/llm-bridge:latest
+    container_name: llm-bridge-windsurf
+    ports:
+      - "3849:3849"
+    environment:
+      - WINDSURF_TOKEN=${WINDSURF_TOKEN}
+      - WINDSURF_LANGUAGE_SERVER_PATH=${WINDSURF_LANGUAGE_SERVER_PATH:-}
+    volumes:
+      - ~/.llm-bridge:/root/.llm-bridge
+    restart: unless-stopped

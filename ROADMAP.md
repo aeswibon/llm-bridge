@@ -8,14 +8,15 @@
 - [x] CLI with setup wizard
 - [x] OpenCode config injection
 - [x] macOS LaunchAgent support
-- [ ] npm publish
-- [ ] Landing page
+- [x] npm publish
+- [x] Landing page
 
 ## Phase 2 — Community
 
-- [ ] Copilot plugin
-- [ ] Windsurf plugin
-- [ ] OAuth support
+- [x] Copilot plugin
+- [x] Windsurf plugin
+- [x] OAuth support (device flow)
+- [x] Daemon architecture (DaemonManager + DaemonBridgeSession)
 - [ ] Linux systemd daemon
 - [ ] Windows service wrapper
 - [ ] Plugin registry website
