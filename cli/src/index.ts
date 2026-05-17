@@ -51,16 +51,16 @@ async function main(): Promise<void> {
     }
     case 'help':
     default:
-      console.log(`llm-bridge v2.0.0
+      console.log(`llm-bridge v1.0.0
 
 Usage:
-  llm-bridge init              Setup wizard
-  llm-bridge start             Launch bridge server
-  llm-bridge configure         Inject OpenCode config
+  llm-bridge init              Interactive setup wizard (configure one or more providers)
+  llm-bridge start             Launch bridge server (all configured plugins registered)
+  llm-bridge configure         Inject OpenCode config for the default provider
   llm-bridge doctor            Run diagnostics
   llm-bridge install-daemon    Install macOS LaunchAgent
   llm-bridge uninstall-daemon  Remove macOS LaunchAgent
-  llm-bridge daemon [status|download|locate]  Manage daemon binary
+  llm-bridge daemon [status|download|locate]  Manage Windsurf daemon binary
   llm-bridge help              Show this help`);
   }
 }
