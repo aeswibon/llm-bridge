@@ -269,6 +269,43 @@ describe('DaemonBridgeSession', () => {
       expect(chunks[0].type).toBe('error');
       expect(chunks[0].content).toContain('exceeded max size');
     });
+
+    it('yields error when process exits without emitting error event', async () => {
+      const mockStdout = new EventEmitter() as NodeJS.ReadableStream;
+      const mockStdin = new EventEmitter() as NodeJS.WritableStream;
+      (mockStdin as any).write = vi.fn(() => true);
+
+      const mockProc = new EventEmitter() as any;
+      mockProc.stdin = mockStdin;
+      mockProc.stdout = mockStdout;
+      mockProc.stderr = new EventEmitter();
+      mockProc.kill = vi.fn(() => true);
+      mockProc.pid = 12345;
+
+      const exitDaemon: DaemonManager = {
+        binaryName: 'exit-test',
+        locate: async () => '/mock/path',
+        download: async () => '/mock/path',
+        spawn: () => {
+          setTimeout(() => {
+            mockProc.emit('exit', 1);
+          }, 10);
+          return mockProc;
+        },
+        healthCheck: async () => true,
+      };
+
+      const exitSession = new DaemonBridgeSession(exitDaemon, 'token', 'model', '/cwd');
+      const chunks: StreamChunk[] = [];
+
+      for await (const chunk of exitSession.send([{ role: 'user', content: 'Hi' }])) {
+        chunks.push(chunk);
+      }
+
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0].type).toBe('error');
+      expect(chunks[0].content).toContain('Process exited with code 1');
+    });
   });
 
   describe('dispose', () => {
