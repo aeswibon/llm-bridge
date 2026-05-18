@@ -142,7 +142,7 @@ All config values can be set via environment variables:
 ## Homebrew (macOS)
 
 ```bash
-brew tap aeswibon/llm-bridge-homebrew
+brew tap aeswibon/llm-bridge
 brew install llm-bridge
 ```
 
