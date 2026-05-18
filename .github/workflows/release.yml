@@ -241,7 +241,7 @@ jobs:
         with:
           formula-name: llm-bridge
           formula-path: Formula/llm-bridge.rb
-          homebrew-tap: ${{ github.repository }}-homebrew
+          homebrew-tap: aeswibon/homebrew-llm-bridge
           download-url: https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/llm-bridge-macos-arm64
           commit-message: |
             {{formulaName}} {{version}}
