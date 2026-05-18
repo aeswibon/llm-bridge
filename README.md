@@ -76,7 +76,7 @@ docker run -d \
 ### Homebrew (macOS)
 
 ```bash
-brew tap aeswibon/llm-bridge-homebrew
+brew tap aeswibon/llm-bridge
 brew install llm-bridge
 llm-bridge init
 llm-bridge start
