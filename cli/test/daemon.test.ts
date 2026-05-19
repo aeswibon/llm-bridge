@@ -85,3 +85,40 @@ describe('installDaemonCommand', () => {
     errorSpy.mockRestore();
   });
 });
+
+describe('uninstallDaemonCommand', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('removes systemd unit file on Linux', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+
+    const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
+    const fs = await import('node:fs');
+    const mockedFs = vi.mocked(fs.default);
+
+    mockedFs.existsSync.mockReturnValue(true);
+
+    await uninstallDaemonCommand();
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user disable --now llm-bridge 2>/dev/null || true',
+      { stdio: 'inherit' },
+    );
+
+    const unlinkCall = mockedFs.unlinkSync.mock.calls[0];
+    expect(unlinkCall[0]).toContain('.config/systemd/user/llm-bridge.service');
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user daemon-reload',
+      { stdio: 'inherit' },
+    );
+  });
+});

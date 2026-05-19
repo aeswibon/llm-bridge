@@ -105,11 +105,17 @@ WantedBy=default.target
 }
 
 export async function uninstallDaemonCommand(): Promise<void> {
-  if (process.platform !== 'darwin') {
-    console.error('Daemon uninstallation is only supported on macOS.');
+  if (process.platform === 'darwin') {
+    await uninstallMacOSDaemon();
+  } else if (process.platform === 'linux') {
+    await uninstallLinuxDaemon();
+  } else {
+    console.error('Daemon uninstallation is only supported on macOS and Linux.');
     process.exit(1);
   }
+}
 
+async function uninstallMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
 
   try {
@@ -125,6 +131,31 @@ export async function uninstallDaemonCommand(): Promise<void> {
     console.log(`Removed LaunchAgent: ${plistPath}`);
   } else {
     console.log('No LaunchAgent found.');
+  }
+}
+
+async function uninstallLinuxDaemon(): Promise<void> {
+  const servicePath = path.join(os.homedir(), '.config', 'systemd', 'user', 'llm-bridge.service');
+
+  try {
+    execSync('systemctl --user disable --now llm-bridge 2>/dev/null || true', {
+      stdio: 'inherit',
+    });
+  } catch {
+    // Ignore errors during disable
+  }
+
+  if (fs.existsSync(servicePath)) {
+    fs.unlinkSync(servicePath);
+    console.log(`Removed systemd service: ${servicePath}`);
+  } else {
+    console.log('No systemd service found.');
+  }
+
+  try {
+    execSync('systemctl --user daemon-reload', { stdio: 'inherit' });
+  } catch {
+    // Ignore errors during reload
   }
 }
 
