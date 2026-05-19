@@ -62,8 +62,8 @@ Usage:
   llm-bridge start             Launch bridge server (all configured plugins registered)
   llm-bridge configure         Inject OpenCode config for the default provider
   llm-bridge doctor            Run diagnostics
-  llm-bridge install-daemon    Install macOS LaunchAgent
-  llm-bridge uninstall-daemon  Remove macOS LaunchAgent
+  llm-bridge install-daemon    Install platform daemon (LaunchAgent or systemd)
+  llm-bridge uninstall-daemon  Remove platform daemon
   llm-bridge daemon [status|download|locate|reload]  Manage Windsurf daemon binary
   llm-bridge help              Show this help`);
   }

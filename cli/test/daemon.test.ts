@@ -66,6 +66,26 @@ describe('installDaemonCommand', () => {
     );
   });
 
+  it('routes to installMacOSDaemon on darwin', async () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+
+    const { installDaemonCommand } = await import('../src/commands/daemon.js');
+    const fs = await import('node:fs');
+    const mockedFs = vi.mocked(fs.default);
+
+    await installDaemonCommand();
+
+    expect(mockedFs.writeFileSync).toHaveBeenCalled();
+    const writeCall = mockedFs.writeFileSync.mock.calls[0];
+    const plistPath = writeCall[0] as string;
+    expect(plistPath).toContain('Library/LaunchAgents/com.llm-bridge.daemon.plist');
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('launchctl bootstrap'),
+      { stdio: 'inherit' },
+    );
+  });
+
   it('exits with error on unsupported platforms', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
 
@@ -122,12 +142,43 @@ describe('uninstallDaemonCommand', () => {
     );
   });
 
+  it('routes to uninstallMacOSDaemon on darwin', async () => {
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+
+    const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
+    const fs = await import('node:fs');
+    const mockedFs = vi.mocked(fs.default);
+
+    mockedFs.existsSync.mockReturnValue(true);
+
+    await uninstallDaemonCommand();
+
+    const unlinkCall = mockedFs.unlinkSync.mock.calls[0];
+    expect(unlinkCall[0]).toContain('Library/LaunchAgents/com.llm-bridge.daemon.plist');
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      expect.stringContaining('launchctl bootout'),
+      { stdio: 'inherit' },
+    );
+  });
+
   it('errors on unsupported platforms', async () => {
     Object.defineProperty(process, 'platform', { value: 'win32' });
 
     const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
 
-    await expect(uninstallDaemonCommand()).rejects.toThrow();
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await uninstallDaemonCommand();
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Daemon uninstallation is only supported on macOS and Linux.',
+    );
+
+    exitSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 
   it('handles missing service file gracefully on Linux', async () => {
@@ -178,6 +229,15 @@ describe('daemonReloadCommand', () => {
 
     const { daemonReloadCommand } = await import('../src/commands/daemon.js');
 
-    await expect(daemonReloadCommand()).rejects.toThrow();
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await daemonReloadCommand();
+
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(consoleSpy).toHaveBeenCalledWith('Daemon reload is only supported on Linux.');
+
+    exitSpy.mockRestore();
+    consoleSpy.mockRestore();
   });
 });
