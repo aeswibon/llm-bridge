@@ -9,11 +9,17 @@ const __dirname = path.dirname(__filename);
 const LABEL = 'com.llm-bridge.daemon';
 
 export async function installDaemonCommand(): Promise<void> {
-  if (process.platform !== 'darwin') {
-    console.error('Daemon installation is only supported on macOS.');
+  if (process.platform === 'darwin') {
+    await installMacOSDaemon();
+  } else if (process.platform === 'linux') {
+    await installLinuxDaemon();
+  } else {
+    console.error('Daemon installations is only supported on macOS and Linux.');
     process.exit(1);
   }
+}
 
+async function installMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
   const wrapperPath = path.join(__dirname, '..', '..', 'scripts', 'llm-bridge-daemon.sh');
 
@@ -49,6 +55,41 @@ export async function installDaemonCommand(): Promise<void> {
     console.log(`Logs: ~/Library/Logs/llm-bridge.{log,err.log}`);
   } catch (e) {
     console.error('Failed to bootstrap daemon:', e);
+    process.exit(1);
+  }
+}
+
+async function installLinuxDaemon(): Promise<void> {
+  const serviceDir = path.join(os.homedir(), '.config', 'systemd', 'user');
+  const servicePath = path.join(serviceDir, 'llm-bridge.service');
+
+  const nodePath = process.execPath;
+  const cliPath = path.join(__dirname, '..', 'dist', 'index.js');
+
+  const unit = `[Unit]
+Description=llm-bridge daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=${nodePath} ${cliPath} start
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+`;
+
+  fs.mkdirSync(serviceDir, { recursive: true });
+  fs.writeFileSync(servicePath, unit);
+
+  try {
+    execSync('systemctl --user daemon-reload', { stdio: 'inherit' });
+    execSync('systemctl --user enable --now llm-bridge', { stdio: 'inherit' });
+    console.log(`Installed systemd user service: ${servicePath}`);
+    console.log('Logs: journalctl --user -u llm-bridge -f');
+  } catch (e) {
+    console.error('Failed to enable systemd service:', e);
     process.exit(1);
   }
 }

@@ -1,0 +1,68 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+
+vi.mock('node:child_process', () => ({
+  execSync: vi.fn(),
+}));
+
+vi.mock('node:fs', () => ({
+  default: {
+    mkdirSync: vi.fn(),
+    writeFileSync: vi.fn(),
+    existsSync: vi.fn(),
+    unlinkSync: vi.fn(),
+  },
+}));
+
+const { execSync } = await import('node:child_process');
+const mockedExecSync = vi.mocked(execSync);
+
+describe('installDaemonCommand', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('generates systemd unit file on Linux', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+
+    const { installDaemonCommand } = await import('../src/commands/daemon.js');
+
+    await installDaemonCommand();
+
+    const fs = await import('node:fs');
+    const mockedFs = vi.mocked(fs.default);
+
+    expect(mockedFs.mkdirSync).toHaveBeenCalled();
+    const writeCall = mockedFs.writeFileSync.mock.calls[0];
+    const unitPath = writeCall[0] as string;
+    expect(unitPath).toContain('.config/systemd/user/llm-bridge.service');
+
+    const unitContent = writeCall[1] as string;
+    expect(unitContent).toContain('[Unit]');
+    expect(unitContent).toContain('Description=llm-bridge daemon');
+    expect(unitContent).toContain('After=network.target');
+    expect(unitContent).toContain('[Service]');
+    expect(unitContent).toContain('Type=simple');
+    expect(unitContent).toContain('Restart=on-failure');
+    expect(unitContent).toContain('RestartSec=5');
+    expect(unitContent).toContain('[Install]');
+    expect(unitContent).toContain('WantedBy=default.target');
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user daemon-reload',
+      { stdio: 'inherit' },
+    );
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user enable --now llm-bridge',
+      { stdio: 'inherit' },
+    );
+  });
+});
