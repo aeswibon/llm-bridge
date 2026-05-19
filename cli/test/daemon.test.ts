@@ -121,4 +121,30 @@ describe('uninstallDaemonCommand', () => {
       { stdio: 'inherit' },
     );
   });
+
+  it('errors on unsupported platforms', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+
+    const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
+
+    await expect(uninstallDaemonCommand()).rejects.toThrow();
+  });
+
+  it('handles missing service file gracefully on Linux', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+
+    const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
+    const fs = await import('node:fs');
+    const mockedFs = vi.mocked(fs.default);
+
+    mockedFs.existsSync.mockReturnValue(false);
+
+    await uninstallDaemonCommand();
+
+    expect(mockedFs.unlinkSync).not.toHaveBeenCalled();
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user daemon-reload',
+      { stdio: 'inherit' },
+    );
+  });
 });
