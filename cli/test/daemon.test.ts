@@ -1,7 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
@@ -16,22 +13,23 @@ vi.mock('node:fs', () => ({
   },
 }));
 
+vi.mock('../src/utils/platform.js', () => ({
+  getPlatform: vi.fn(() => process.platform),
+}));
+
 const { execSync } = await import('node:child_process');
 const mockedExecSync = vi.mocked(execSync);
+const { getPlatform } = await import('../src/utils/platform.js');
+const mockedGetPlatform = vi.mocked(getPlatform);
 
 describe('installDaemonCommand', () => {
-  const originalPlatform = process.platform;
-
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    mockedGetPlatform.mockReturnValue(process.platform);
   });
 
   it('generates systemd unit file on Linux', async () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    mockedGetPlatform.mockReturnValue('linux');
 
     const { installDaemonCommand } = await import('../src/commands/daemon.js');
 
@@ -67,7 +65,7 @@ describe('installDaemonCommand', () => {
   });
 
   it('routes to installMacOSDaemon on darwin', async () => {
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    mockedGetPlatform.mockReturnValue('darwin');
 
     const { installDaemonCommand } = await import('../src/commands/daemon.js');
     const fs = await import('node:fs');
@@ -87,7 +85,7 @@ describe('installDaemonCommand', () => {
   });
 
   it('exits with error on unsupported platforms', async () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
+    mockedGetPlatform.mockReturnValue('win32');
 
     const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -107,18 +105,13 @@ describe('installDaemonCommand', () => {
 });
 
 describe('uninstallDaemonCommand', () => {
-  const originalPlatform = process.platform;
-
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    mockedGetPlatform.mockReturnValue(process.platform);
   });
 
   it('removes systemd unit file on Linux', async () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    mockedGetPlatform.mockReturnValue('linux');
 
     const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
     const fs = await import('node:fs');
@@ -143,7 +136,7 @@ describe('uninstallDaemonCommand', () => {
   });
 
   it('routes to uninstallMacOSDaemon on darwin', async () => {
-    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    mockedGetPlatform.mockReturnValue('darwin');
 
     const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
     const fs = await import('node:fs');
@@ -163,7 +156,7 @@ describe('uninstallDaemonCommand', () => {
   });
 
   it('errors on unsupported platforms', async () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
+    mockedGetPlatform.mockReturnValue('win32');
 
     const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
 
@@ -182,7 +175,7 @@ describe('uninstallDaemonCommand', () => {
   });
 
   it('handles missing service file gracefully on Linux', async () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    mockedGetPlatform.mockReturnValue('linux');
 
     const { uninstallDaemonCommand } = await import('../src/commands/daemon.js');
     const fs = await import('node:fs');
@@ -201,18 +194,13 @@ describe('uninstallDaemonCommand', () => {
 });
 
 describe('daemonReloadCommand', () => {
-  const originalPlatform = process.platform;
-
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    mockedGetPlatform.mockReturnValue(process.platform);
   });
 
   it('runs systemctl daemon-reload on Linux', async () => {
-    Object.defineProperty(process, 'platform', { value: 'linux' });
+    mockedGetPlatform.mockReturnValue('linux');
 
     const { daemonReloadCommand } = await import('../src/commands/daemon.js');
 
@@ -225,7 +213,7 @@ describe('daemonReloadCommand', () => {
   });
 
   it('errors on unsupported platforms', async () => {
-    Object.defineProperty(process, 'platform', { value: 'win32' });
+    mockedGetPlatform.mockReturnValue('win32');
 
     const { daemonReloadCommand } = await import('../src/commands/daemon.js');
 

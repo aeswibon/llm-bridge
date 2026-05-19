@@ -3,15 +3,17 @@ import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { getPlatform } from '../utils/platform.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LABEL = 'com.llm-bridge.daemon';
 
 export async function installDaemonCommand(): Promise<void> {
-  if (process.platform === 'darwin') {
+  const platform = getPlatform();
+  if (platform === 'darwin') {
     await installMacOSDaemon();
-  } else if (process.platform === 'linux') {
+  } else if (platform === 'linux') {
     await installLinuxDaemon();
   } else {
     console.error('Daemon installation is only supported on macOS and Linux.');
@@ -105,9 +107,10 @@ WantedBy=default.target
 }
 
 export async function uninstallDaemonCommand(): Promise<void> {
-  if (process.platform === 'darwin') {
+  const platform = getPlatform();
+  if (platform === 'darwin') {
     await uninstallMacOSDaemon();
-  } else if (process.platform === 'linux') {
+  } else if (platform === 'linux') {
     await uninstallLinuxDaemon();
   } else {
     console.error('Daemon uninstallation is only supported on macOS and Linux.');
@@ -202,7 +205,7 @@ export async function daemonLocateCommand(): Promise<void> {
 }
 
 export async function daemonReloadCommand(): Promise<void> {
-  if (process.platform !== 'linux') {
+  if (getPlatform() !== 'linux') {
     console.error('Daemon reload is only supported on Linux.');
     process.exit(1);
   }
