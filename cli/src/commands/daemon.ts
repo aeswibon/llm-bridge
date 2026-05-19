@@ -14,7 +14,7 @@ export async function installDaemonCommand(): Promise<void> {
   } else if (process.platform === 'linux') {
     await installLinuxDaemon();
   } else {
-    console.error('Daemon installations is only supported on macOS and Linux.');
+    console.error('Daemon installation is only supported on macOS and Linux.');
     process.exit(1);
   }
 }
@@ -46,8 +46,13 @@ async function installMacOSDaemon(): Promise<void> {
 </dict>
 </plist>`;
 
-  fs.mkdirSync(path.dirname(plistPath), { recursive: true });
-  fs.writeFileSync(plistPath, plist);
+  try {
+    fs.mkdirSync(path.dirname(plistPath), { recursive: true });
+    fs.writeFileSync(plistPath, plist);
+  } catch (e) {
+    console.error('Failed to write plist file:', e);
+    process.exit(1);
+  }
 
   try {
     execSync(`launchctl bootstrap "gui/$(id -u)" "${plistPath}"`, { stdio: 'inherit' });
@@ -80,8 +85,13 @@ RestartSec=5
 WantedBy=default.target
 `;
 
-  fs.mkdirSync(serviceDir, { recursive: true });
-  fs.writeFileSync(servicePath, unit);
+  try {
+    fs.mkdirSync(serviceDir, { recursive: true });
+    fs.writeFileSync(servicePath, unit);
+  } catch (e) {
+    console.error('Failed to write service file:', e);
+    process.exit(1);
+  }
 
   try {
     execSync('systemctl --user daemon-reload', { stdio: 'inherit' });

@@ -65,4 +65,23 @@ describe('installDaemonCommand', () => {
       { stdio: 'inherit' },
     );
   });
+
+  it('exits with error on unsupported platforms', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+
+    const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { installDaemonCommand } = await import('../src/commands/daemon.js');
+
+    await installDaemonCommand();
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Daemon installation is only supported on macOS and Linux.',
+    );
+    expect(exitSpy).toHaveBeenCalledWith(1);
+
+    exitSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
 });
