@@ -148,3 +148,36 @@ describe('uninstallDaemonCommand', () => {
     );
   });
 });
+
+describe('daemonReloadCommand', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it('runs systemctl daemon-reload on Linux', async () => {
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+
+    const { daemonReloadCommand } = await import('../src/commands/daemon.js');
+
+    await daemonReloadCommand();
+
+    expect(mockedExecSync).toHaveBeenCalledWith(
+      'systemctl --user reload-or-restart llm-bridge',
+      { stdio: 'inherit' },
+    );
+  });
+
+  it('errors on unsupported platforms', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+
+    const { daemonReloadCommand } = await import('../src/commands/daemon.js');
+
+    await expect(daemonReloadCommand()).rejects.toThrow();
+  });
+});

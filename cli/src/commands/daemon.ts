@@ -200,3 +200,18 @@ export async function daemonLocateCommand(): Promise<void> {
     process.exit(1);
   }
 }
+
+export async function daemonReloadCommand(): Promise<void> {
+  if (process.platform !== 'linux') {
+    console.error('Daemon reload is only supported on Linux.');
+    process.exit(1);
+  }
+
+  try {
+    execSync('systemctl --user reload-or-restart llm-bridge', { stdio: 'inherit' });
+    console.log('Daemon reloaded.');
+  } catch (e) {
+    console.error('Failed to reload daemon:', e);
+    process.exit(1);
+  }
+}

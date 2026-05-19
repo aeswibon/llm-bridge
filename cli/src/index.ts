@@ -7,6 +7,7 @@ import {
   daemonStatusCommand,
   daemonDownloadCommand,
   daemonLocateCommand,
+  daemonReloadCommand,
 } from './commands/daemon.js';
 import { installDaemonCommand, uninstallDaemonCommand } from './commands/daemon.js';
 
@@ -44,8 +45,11 @@ async function main(): Promise<void> {
         case 'locate':
           await daemonLocateCommand();
           break;
+        case 'reload':
+          await daemonReloadCommand();
+          break;
         default:
-          console.log('Usage: llm-bridge daemon [status|download|locate]');
+          console.log('Usage: llm-bridge daemon [status|download|locate|reload]');
       }
       break;
     }
@@ -60,7 +64,7 @@ Usage:
   llm-bridge doctor            Run diagnostics
   llm-bridge install-daemon    Install macOS LaunchAgent
   llm-bridge uninstall-daemon  Remove macOS LaunchAgent
-  llm-bridge daemon [status|download|locate]  Manage Windsurf daemon binary
+  llm-bridge daemon [status|download|locate|reload]  Manage Windsurf daemon binary
   llm-bridge help              Show this help`);
   }
 }
