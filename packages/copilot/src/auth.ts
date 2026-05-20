@@ -17,16 +17,51 @@ export async function validateToken(token: string): Promise<boolean> {
   }
 }
 
-export function getToken(config: CopilotConfig): string | null {
-  return config.COPILOT_TOKEN ?? config.COPILOT_OAUTH_TOKEN ?? null;
+export async function getToken(config: CopilotConfig): Promise<string | null> {
+  if (config.COPILOT_TOKEN) return config.COPILOT_TOKEN;
+
+  try {
+    const { createTokenStore } = await import('@ai-ide-bridge/oauth');
+    const store = createTokenStore();
+    const token = await store.get('copilot');
+    if (token && Date.now() < token.expiresAt) {
+      return token.accessToken;
+    }
+  } catch {
+    // OAuth package may not be available
+  }
+
+  return config.COPILOT_OAUTH_TOKEN ?? null;
 }
 
-// OAuth placeholder — wired up when OAuth Phase 2 is implemented
 export async function refreshOAuthToken(
-  _refreshToken: string,
-  _clientId: string,
+  refreshToken: string,
+  clientId: string,
   _clientSecret: string,
 ): Promise<{ accessToken: string; refreshToken: string } | null> {
-  // TODO: Implement GitHub OAuth with PKCE flow
-  return null;
+  try {
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: clientId,
+    });
+
+    const response = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as Record<string, unknown>;
+    if (!data.access_token) return null;
+
+    return {
+      accessToken: data.access_token as string,
+      refreshToken: (data.refresh_token as string) ?? refreshToken,
+    };
+  } catch {
+    return null;
+  }
 }

@@ -20,18 +20,12 @@ importers:
 
   cli:
     dependencies:
-      '@ai-ide-bridge/copilot':
-        specifier: workspace:*
-        version: link:../packages/copilot
-      '@ai-ide-bridge/core':
-        specifier: workspace:*
-        version: link:../packages/core
-      '@ai-ide-bridge/cursor':
-        specifier: workspace:*
-        version: link:../packages/cursor
-      '@ai-ide-bridge/windsurf':
-        specifier: workspace:*
-        version: link:../packages/windsurf
+      '@cursor/sdk':
+        specifier: ^1.0.13
+        version: 1.0.13
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/node':
         specifier: ^22.15.0
@@ -45,6 +39,9 @@ importers:
       '@ai-ide-bridge/core':
         specifier: workspace:*
         version: link:../core
+      '@ai-ide-bridge/oauth':
+        specifier: workspace:*
+        version: link:../oauth
     devDependencies:
       '@types/node':
         specifier: ^22.15.0

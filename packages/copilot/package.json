@@ -12,7 +12,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@ai-ide-bridge/core": "workspace:*"
+    "@ai-ide-bridge/core": "workspace:*",
+    "@ai-ide-bridge/oauth": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

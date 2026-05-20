@@ -1,7 +1,7 @@
-import { BridgeServer, loadConfig } from '@ai-ide-bridge/core';
-import { CursorBridgePlugin } from '@ai-ide-bridge/cursor';
-import { CopilotBridgePlugin } from '@ai-ide-bridge/copilot';
-import { WindsurfBridgePlugin } from '@ai-ide-bridge/windsurf';
+import { BridgeServer, loadConfig } from '../core/index.js';
+import { CursorBridgePlugin } from '../plugins/cursor/index.js';
+import { CopilotBridgePlugin } from '../plugins/copilot/index.js';
+import { WindsurfBridgePlugin } from '../plugins/windsurf/index.js';
 
 async function getPlugin(name: string) {
   switch (name) {

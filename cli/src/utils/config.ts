@@ -1,4 +1,4 @@
-import { loadConfig, saveConfig, BridgeConfig } from '@ai-ide-bridge/core';
+import { loadConfig, saveConfig, BridgeConfig } from '../core/index.js';
 
 export function readConfig(): BridgeConfig {
   return loadConfig();
