@@ -3,6 +3,7 @@ import { CursorBridgePlugin } from '../plugins/cursor/index.js';
 import { CopilotBridgePlugin } from '../plugins/copilot/index.js';
 import { WindsurfBridgePlugin } from '../plugins/windsurf/index.js';
 import { createInterface } from 'node:readline';
+import { stdin as processStdin, stdout as processStdout } from 'node:process';
 import { loginCommand } from './login.js';
 
 const PROVIDERS = ['cursor', 'copilot', 'windsurf'] as const;
@@ -50,6 +51,47 @@ async function authenticateWithOAuth(provider: Provider): Promise<boolean> {
   return false;
 }
 
+async function askHidden(prompt: string): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const stdin = processStdin;
+    const stdout = processStdout;
+
+    stdout.write(prompt);
+
+    const wasRaw = stdin.isRaw;
+    stdin.setRawMode(true);
+    stdin.resume();
+
+    let input = '';
+
+    const onData = (data: Buffer) => {
+      const char = data.toString();
+      if (char === '\r' || char === '\n') {
+        stdin.setRawMode(wasRaw);
+        stdin.pause();
+        stdin.removeListener('data', onData);
+        stdout.write('\n');
+        resolve(input);
+      } else if (char === '\x7f' || char === '\b') {
+        if (input.length > 0) {
+          input = input.slice(0, -1);
+          stdout.write('\b \b');
+        }
+      } else if (char === '\x03') {
+        stdin.setRawMode(wasRaw);
+        stdin.pause();
+        stdin.removeListener('data', onData);
+        process.exit(1);
+      } else {
+        input += char;
+        stdout.write('*');
+      }
+    };
+
+    stdin.on('data', onData);
+  });
+}
+
 export async function initCommand(): Promise<void> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q: string) => new Promise<string>((resolve) => rl.question(q, resolve));
@@ -95,7 +137,7 @@ export async function initCommand(): Promise<void> {
     }
 
     const envVar = getEnvVar(provider);
-    const credential = await ask(getCredentialPrompt(provider));
+    const credential = await askHidden(getCredentialPrompt(provider));
     if (!credential) {
       console.error('Credential is required.');
       continue;
