@@ -2,23 +2,23 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getToken, validateToken } from '../src/auth.js';
 
 describe('getToken', () => {
-  it('returns COPILOT_TOKEN when present', () => {
-    const result = getToken({ COPILOT_TOKEN: 'test-token' });
+  it('returns COPILOT_TOKEN when present', async () => {
+    const result = await getToken({ COPILOT_TOKEN: 'test-token' });
     expect(result).toBe('test-token');
   });
 
-  it('returns COPILOT_OAUTH_TOKEN when COPILOT_TOKEN is missing', () => {
-    const result = getToken({ COPILOT_OAUTH_TOKEN: 'oauth-token' });
+  it('returns COPILOT_OAUTH_TOKEN when COPILOT_TOKEN is missing', async () => {
+    const result = await getToken({ COPILOT_OAUTH_TOKEN: 'oauth-token' });
     expect(result).toBe('oauth-token');
   });
 
-  it('returns null when no token is present', () => {
-    const result = getToken({});
+  it('returns null when no token is present', async () => {
+    const result = await getToken({});
     expect(result).toBeNull();
   });
 
-  it('prefers COPILOT_TOKEN over COPILOT_OAUTH_TOKEN', () => {
-    const result = getToken({
+  it('prefers COPILOT_TOKEN over COPILOT_OAUTH_TOKEN', async () => {
+    const result = await getToken({
       COPILOT_TOKEN: 'primary-token',
       COPILOT_OAUTH_TOKEN: 'fallback-token',
     });

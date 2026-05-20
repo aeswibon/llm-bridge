@@ -10,6 +10,8 @@ import {
   daemonReloadCommand,
 } from './commands/daemon.js';
 import { installDaemonCommand, uninstallDaemonCommand } from './commands/daemon.js';
+import { loginCommand } from './commands/login.js';
+import { logoutCommand } from './commands/logout.js';
 
 const command = process.argv[2] ?? 'help';
 
@@ -53,6 +55,16 @@ async function main(): Promise<void> {
       }
       break;
     }
+    case 'login': {
+      const provider = process.argv[3];
+      await loginCommand(provider);
+      break;
+    }
+    case 'logout': {
+      const provider = process.argv[3];
+      await logoutCommand(provider);
+      break;
+    }
     case 'help':
     default:
       console.log(`llm-bridge v1.0.0
@@ -60,6 +72,8 @@ async function main(): Promise<void> {
 Usage:
   llm-bridge init              Interactive setup wizard (configure one or more providers)
   llm-bridge start             Launch bridge server (all configured plugins registered)
+  llm-bridge login [provider]  OAuth login (copilot, cursor)
+  llm-bridge logout [provider] Remove stored OAuth token
   llm-bridge configure         Inject OpenCode config for the default provider
   llm-bridge doctor            Run diagnostics
   llm-bridge install-daemon    Install platform daemon (LaunchAgent or systemd)

@@ -1,8 +1,9 @@
 import { setPluginConfig, writeConfig, readConfig } from '../utils/config.js';
-import { CursorBridgePlugin } from '@ai-ide-bridge/cursor';
-import { CopilotBridgePlugin } from '@ai-ide-bridge/copilot';
-import { WindsurfBridgePlugin } from '@ai-ide-bridge/windsurf';
+import { CursorBridgePlugin } from '../plugins/cursor/index.js';
+import { CopilotBridgePlugin } from '../plugins/copilot/index.js';
+import { WindsurfBridgePlugin } from '../plugins/windsurf/index.js';
 import { createInterface } from 'node:readline';
+import { loginCommand } from './login.js';
 
 const PROVIDERS = ['cursor', 'copilot', 'windsurf'] as const;
 type Provider = (typeof PROVIDERS)[number];
@@ -23,7 +24,7 @@ function getCredentialPrompt(provider: Provider): string {
     case 'cursor':
       return 'Enter your CURSOR_API_KEY: ';
     case 'copilot':
-      return 'Enter your GITHUB_TOKEN: ';
+      return 'Enter your GITHUB_TOKEN (or leave empty for OAuth): ';
     case 'windsurf':
       return 'Enter your WINDSURF_TOKEN: ';
   }
@@ -38,6 +39,15 @@ function getEnvVar(provider: Provider): string {
     case 'windsurf':
       return 'WINDSURF_TOKEN';
   }
+}
+
+async function authenticateWithOAuth(provider: Provider): Promise<boolean> {
+  if (provider === 'copilot') {
+    await loginCommand('copilot');
+    return true;
+  }
+  console.log(`OAuth not available for ${provider}. Use token authentication instead.`);
+  return false;
 }
 
 export async function initCommand(): Promise<void> {
@@ -68,6 +78,21 @@ export async function initCommand(): Promise<void> {
     }
 
     const provider = input as Provider;
+
+    if (provider === 'copilot') {
+      const method = await ask('Auth method (token/oauth): ');
+      if (method.toLowerCase() === 'oauth') {
+        const ok = await authenticateWithOAuth(provider);
+        if (!ok) continue;
+        console.log(`Authentication successful for ${provider}.`);
+        setPluginConfig(provider, { COPILOT_OAUTH: 'true' });
+        configuredProviders.push(provider);
+        if (!firstProvider) firstProvider = provider;
+        const more = await ask('Configure another provider? (y/n): ');
+        if (more.toLowerCase() !== 'y') break;
+        continue;
+      }
+    }
 
     const envVar = getEnvVar(provider);
     const credential = await ask(getCredentialPrompt(provider));

@@ -2,11 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { createWindsurfDaemon } from '../plugins/windsurf/daemon.js';
 import { getPlatform } from '../utils/platform.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 const LABEL = 'com.llm-bridge.daemon';
 
 export async function installDaemonCommand(): Promise<void> {
@@ -23,7 +21,7 @@ export async function installDaemonCommand(): Promise<void> {
 
 async function installMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-  const wrapperPath = path.join(__dirname, '..', '..', 'scripts', 'llm-bridge-daemon.sh');
+  const wrapperPath = path.join(path.dirname(process.execPath), '..', 'scripts', 'llm-bridge-daemon.sh');
 
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -70,8 +68,7 @@ async function installLinuxDaemon(): Promise<void> {
   const serviceDir = path.join(os.homedir(), '.config', 'systemd', 'user');
   const servicePath = path.join(serviceDir, 'llm-bridge.service');
 
-  const nodePath = process.execPath;
-  const cliPath = path.join(__dirname, '..', 'dist', 'index.js');
+  const binaryPath = process.execPath;
 
   const unit = `[Unit]
 Description=llm-bridge daemon
@@ -79,7 +76,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${nodePath} ${cliPath} start
+ExecStart=${binaryPath} start
 Restart=on-failure
 RestartSec=5
 
@@ -163,7 +160,6 @@ async function uninstallLinuxDaemon(): Promise<void> {
 }
 
 export async function daemonStatusCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   const path = await daemon.locate();
@@ -178,7 +174,6 @@ export async function daemonStatusCommand(): Promise<void> {
 }
 
 export async function daemonDownloadCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   console.log('Downloading Windsurf language server...');
@@ -192,7 +187,6 @@ export async function daemonDownloadCommand(): Promise<void> {
 }
 
 export async function daemonLocateCommand(): Promise<void> {
-  const { createWindsurfDaemon } = await import('@ai-ide-bridge/windsurf/daemon.js');
   const daemon = createWindsurfDaemon();
 
   const path = await daemon.locate();
