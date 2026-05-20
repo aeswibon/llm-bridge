@@ -18,8 +18,9 @@ export function findOpencodeConfig(): string | null {
 export function injectProvider(
   configPath: string,
   providerId: string,
-  modelId: string,
+  models: Record<string, { name: string }>,
   port: number,
+  defaultModelId: string,
 ): void {
   const raw = fs.readFileSync(configPath, 'utf8');
   let config: any;
@@ -36,8 +37,8 @@ export function injectProvider(
       apiKey: 'bridge-local',
       baseURL: `http://127.0.0.1:${port}/v1`,
     },
-    models: { [modelId]: { name: modelId } },
+    models,
   };
-  config.model = `${providerId}/${modelId}`;
+  config.model = `${providerId}/${defaultModelId}`;
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
 }
