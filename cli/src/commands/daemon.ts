@@ -21,7 +21,12 @@ export async function installDaemonCommand(): Promise<void> {
 
 async function installMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-  const wrapperPath = path.join(path.dirname(process.execPath), '..', 'scripts', 'llm-bridge-daemon.sh');
+  const wrapperPath = path.join(
+    path.dirname(process.execPath),
+    '..',
+    'scripts',
+    'llm-bridge-daemon.sh',
+  );
 
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

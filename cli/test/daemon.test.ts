@@ -54,14 +54,12 @@ describe('installDaemonCommand', () => {
     expect(unitContent).toContain('[Install]');
     expect(unitContent).toContain('WantedBy=default.target');
 
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      'systemctl --user daemon-reload',
-      { stdio: 'inherit' },
-    );
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      'systemctl --user enable --now llm-bridge',
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith('systemctl --user daemon-reload', {
+      stdio: 'inherit',
+    });
+    expect(mockedExecSync).toHaveBeenCalledWith('systemctl --user enable --now llm-bridge', {
+      stdio: 'inherit',
+    });
   });
 
   it('routes to installMacOSDaemon on darwin', async () => {
@@ -78,10 +76,9 @@ describe('installDaemonCommand', () => {
     const plistPath = writeCall[0] as string;
     expect(plistPath).toContain('Library/LaunchAgents/com.llm-bridge.daemon.plist');
 
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining('launchctl bootstrap'),
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith(expect.stringContaining('launchctl bootstrap'), {
+      stdio: 'inherit',
+    });
   });
 
   it('exits with error on unsupported platforms', async () => {
@@ -129,10 +126,9 @@ describe('uninstallDaemonCommand', () => {
     const unlinkCall = mockedFs.unlinkSync.mock.calls[0];
     expect(unlinkCall[0]).toContain('.config/systemd/user/llm-bridge.service');
 
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      'systemctl --user daemon-reload',
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith('systemctl --user daemon-reload', {
+      stdio: 'inherit',
+    });
   });
 
   it('routes to uninstallMacOSDaemon on darwin', async () => {
@@ -149,10 +145,9 @@ describe('uninstallDaemonCommand', () => {
     const unlinkCall = mockedFs.unlinkSync.mock.calls[0];
     expect(unlinkCall[0]).toContain('Library/LaunchAgents/com.llm-bridge.daemon.plist');
 
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      expect.stringContaining('launchctl bootout'),
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith(expect.stringContaining('launchctl bootout'), {
+      stdio: 'inherit',
+    });
   });
 
   it('errors on unsupported platforms', async () => {
@@ -186,10 +181,9 @@ describe('uninstallDaemonCommand', () => {
     await uninstallDaemonCommand();
 
     expect(mockedFs.unlinkSync).not.toHaveBeenCalled();
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      'systemctl --user daemon-reload',
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith('systemctl --user daemon-reload', {
+      stdio: 'inherit',
+    });
   });
 });
 
@@ -206,10 +200,9 @@ describe('daemonReloadCommand', () => {
 
     await daemonReloadCommand();
 
-    expect(mockedExecSync).toHaveBeenCalledWith(
-      'systemctl --user reload-or-restart llm-bridge',
-      { stdio: 'inherit' },
-    );
+    expect(mockedExecSync).toHaveBeenCalledWith('systemctl --user reload-or-restart llm-bridge', {
+      stdio: 'inherit',
+    });
   });
 
   it('errors on unsupported platforms', async () => {

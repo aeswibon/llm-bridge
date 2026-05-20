@@ -42,7 +42,14 @@ export async function loginCommand(provider?: string): Promise<void> {
 
 async function loginWithDeviceFlow(
   rl: ReturnType<typeof createInterface>,
-  provider: { id: string; name: string; authUrl: string; tokenUrl: string; scopes: string[]; clientId: string },
+  provider: {
+    id: string;
+    name: string;
+    authUrl: string;
+    tokenUrl: string;
+    scopes: string[];
+    clientId: string;
+  },
   store: ReturnType<typeof createTokenStore>,
 ): Promise<void> {
   const config = {
@@ -75,7 +82,14 @@ async function loginWithDeviceFlow(
 
 async function loginWithPKCE(
   rl: ReturnType<typeof createInterface>,
-  provider: { id: string; name: string; authUrl: string; tokenUrl: string; scopes: string[]; clientId: string },
+  provider: {
+    id: string;
+    name: string;
+    authUrl: string;
+    tokenUrl: string;
+    scopes: string[];
+    clientId: string;
+  },
   store: ReturnType<typeof createTokenStore>,
 ): Promise<void> {
   console.log(`\nOAuth with PKCE is not yet supported for ${provider.name}.`);
