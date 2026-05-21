@@ -12,7 +12,6 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@cursor/sdk": "^1.0.13",
     "@ai-ide-bridge/core": "workspace:*"
   },
   "devDependencies": {

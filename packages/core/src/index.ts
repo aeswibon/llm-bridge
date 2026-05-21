@@ -23,3 +23,6 @@ export type {
   OAuthConfig,
   TokenLifecycleOptions,
 } from '@ai-ide-bridge/oauth';
+
+export { parseSSE, createTransport, createStream } from './sse/index.js';
+export type { SSEEvent, TransportOptions, Transport, StreamOptions } from './sse/index.js';

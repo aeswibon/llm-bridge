@@ -1,83 +1,103 @@
-import { Agent } from '@cursor/sdk';
-import type { SDKAgent, SendOptions } from '@cursor/sdk';
-import type { BridgeSession, Message, ToolDefinition, StreamChunk } from '../../core/index.js';
-import { translateTools } from './tools.js';
+import type {
+  BridgeSession,
+  Message,
+  ToolDefinition,
+  StreamChunk,
+  SSEEvent,
+} from '../../core/index.js';
+import { createStream } from '../../core/index.js';
+
+const CURSOR_API_BASE = 'https://api2.cursor.sh';
 
 export class CursorBridgeSession implements BridgeSession {
-  private agent: SDKAgent | null = null;
   private apiKey: string;
   private modelId: string;
-  private cwd: string;
 
-  constructor(apiKey: string, modelId: string, cwd: string = process.cwd()) {
+  constructor(apiKey: string, modelId: string) {
     this.apiKey = apiKey;
     this.modelId = modelId;
-    this.cwd = cwd;
   }
 
   async *send(messages: Message[], tools?: ToolDefinition[]): AsyncIterable<StreamChunk> {
-    const prompt = this.buildPrompt(messages);
-    const cursorTools = tools ? translateTools(tools) : undefined;
+    const body = JSON.stringify({
+      model: this.modelId,
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+        ...(m.tool_calls && { tool_calls: m.tool_calls }),
+        ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
+        ...(m.name && { name: m.name }),
+      })),
+      ...(tools && { tools: tools.map((t) => t) }),
+      stream: true,
+    });
 
-    try {
-      this.agent = await Agent.create({
-        apiKey: this.apiKey,
-        model: { id: this.modelId },
-        local: { cwd: this.cwd, settingSources: [] },
-      });
-
-      const sendOptions: SendOptions = {
-        model: { id: this.modelId },
-        onDelta: ({ update }) => {
-          if (update.type === 'text-delta' && 'text' in update && update.text) {
-            // onDelta is synchronous callback, we buffer and yield in the loop
-          }
-        },
-      };
-
-      const run = await this.agent.send(prompt, sendOptions);
-
-      const result = await run.wait();
-      if (result.status === 'error' || result.status === 'cancelled') {
-        yield {
-          type: 'error',
-          content: `Agent run ${result.status}: ${result.result ?? 'no details'}`,
-          finishReason: 'error',
-        };
-        return;
-      }
-
-      yield { type: 'text', content: result.result ?? '', finishReason: 'stop' };
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      yield { type: 'error', content: msg, finishReason: 'error' };
+    for await (const chunk of createStream({
+      url: `${CURSOR_API_BASE}/aiserver.v1.AiService/StreamChat`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        Accept: 'text/event-stream',
+      },
+      body,
+      parseEvent: parseCursorEvent,
+    })) {
+      yield chunk;
     }
   }
 
   async dispose(): Promise<void> {
-    if (this.agent) {
-      try {
-        await this.agent[Symbol.asyncDispose]();
-      } catch {
-        // Ignore dispose errors
-      }
-      this.agent = null;
-    }
+    // No state to dispose with direct HTTP
+  }
+}
+
+function parseCursorEvent(event: SSEEvent): StreamChunk | null {
+  if (event.event === 'error') {
+    return { type: 'error', content: event.data, finishReason: 'error' };
   }
 
-  private buildPrompt(messages: Message[]): string {
-    const blocks: string[] = [];
-    for (const m of messages) {
-      const text =
-        typeof m.content === 'string'
-          ? m.content
-          : m.content != null
-            ? JSON.stringify(m.content)
-            : '';
-      if (!text) continue;
-      const label = m.role === 'tool' ? `tool (${m.tool_call_id ?? m.name ?? 'result'})` : m.role;
-      blocks.push(`[${label}]\n${text}`);
-    }
-    return `\nFollow this conversation transcript and reply as the assistant.\n\n${blocks.join('\n\n---\n\n')}\n`;
+  if (event.data === '' || event.data === '[DONE]') {
+    return { type: 'done', finishReason: 'stop' };
   }
+
+  try {
+    const json = JSON.parse(event.data);
+
+    if (json.error) {
+      return {
+        type: 'error',
+        content: json.error.message ?? JSON.stringify(json.error),
+        finishReason: 'error',
+      };
+    }
+
+    if (json.choices?.[0]?.delta?.content) {
+      return { type: 'text', content: json.choices[0].delta.content };
+    }
+
+    if (json.choices?.[0]?.delta?.tool_calls) {
+      for (const tc of json.choices[0].delta.tool_calls) {
+        return {
+          type: 'tool_call',
+          toolCall: {
+            id: tc.id ?? `tc-${Date.now()}`,
+            name: tc.function?.name ?? '',
+            arguments: tc.function?.arguments ?? '',
+          },
+        };
+      }
+    }
+
+    if (json.choices?.[0]?.finish_reason) {
+      return {
+        type: 'done',
+        finishReason: json.choices[0].finish_reason === 'stop' ? 'stop' : 'tool_calls',
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }

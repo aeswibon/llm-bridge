@@ -7,3 +7,5 @@ export { PluginRegistry } from './registry.js';
 export { loadConfig, saveConfig, configPath } from './config.js';
 export { createDaemonManager, type DaemonManager } from './daemon.js';
 export { DaemonBridgeSession } from './daemon-session.js';
+export { parseSSE, createTransport, createStream } from './sse/index.js';
+export type { SSEEvent, TransportOptions, Transport, StreamOptions } from './sse/index.js';

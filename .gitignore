@@ -9,3 +9,4 @@ coverage/
 *.tsbuildinfo
 docs/superpowers/
 node_modules
+llm-bridge-macos
