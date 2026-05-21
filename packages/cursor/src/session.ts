@@ -1,4 +1,10 @@
-import type { BridgeSession, Message, ToolDefinition, StreamChunk, SSEEvent } from '@ai-ide-bridge/core';
+import type {
+  BridgeSession,
+  Message,
+  ToolDefinition,
+  StreamChunk,
+  SSEEvent,
+} from '@ai-ide-bridge/core';
 import { createStream } from '@ai-ide-bridge/core';
 
 const CURSOR_API_BASE = 'https://api2.cursor.sh';
@@ -59,7 +65,11 @@ function parseCursorEvent(event: SSEEvent): StreamChunk | null {
     const json = JSON.parse(event.data);
 
     if (json.error) {
-      return { type: 'error', content: json.error.message ?? JSON.stringify(json.error), finishReason: 'error' };
+      return {
+        type: 'error',
+        content: json.error.message ?? JSON.stringify(json.error),
+        finishReason: 'error',
+      };
     }
 
     if (json.choices?.[0]?.delta?.content) {
@@ -80,7 +90,10 @@ function parseCursorEvent(event: SSEEvent): StreamChunk | null {
     }
 
     if (json.choices?.[0]?.finish_reason) {
-      return { type: 'done', finishReason: json.choices[0].finish_reason === 'stop' ? 'stop' : 'tool_calls' };
+      return {
+        type: 'done',
+        finishReason: json.choices[0].finish_reason === 'stop' ? 'stop' : 'tool_calls',
+      };
     }
   } catch {
     return null;

@@ -5,9 +5,7 @@ export interface SSEEvent {
   retry?: number;
 }
 
-export async function* parseSSE(
-  stream: ReadableStream<Uint8Array>,
-): AsyncIterable<SSEEvent> {
+export async function* parseSSE(stream: ReadableStream<Uint8Array>): AsyncIterable<SSEEvent> {
   const decoder = new TextDecoder();
   const reader = stream.getReader();
 
@@ -85,9 +83,15 @@ export async function* parseSSE(
         const field = colonIndex === -1 ? line : line.slice(0, colonIndex);
         const value = colonIndex === -1 ? '' : line.slice(colonIndex + 1).trimStart();
         switch (field) {
-          case 'id': eventId = value; break;
-          case 'event': eventType = value; break;
-          case 'data': eventData = eventData ? eventData + '\n' + value : value; break;
+          case 'id':
+            eventId = value;
+            break;
+          case 'event':
+            eventType = value;
+            break;
+          case 'data':
+            eventData = eventData ? eventData + '\n' + value : value;
+            break;
           case 'retry': {
             const parsed = parseInt(value, 10);
             if (!isNaN(parsed)) retryMs = parsed;

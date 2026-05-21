@@ -60,6 +60,10 @@ function defaultModels(): ModelInfo[] {
     { id: 'composer-2', name: 'Composer 2', capabilities: { streaming: true, tools: true } },
     { id: 'composer-2.5', name: 'Composer 2.5', capabilities: { streaming: true, tools: true } },
     { id: 'gpt-4o', name: 'GPT-4o', capabilities: { streaming: true, tools: true } },
-    { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', capabilities: { streaming: true, tools: true } },
+    {
+      id: 'claude-3.5-sonnet',
+      name: 'Claude 3.5 Sonnet',
+      capabilities: { streaming: true, tools: true },
+    },
   ];
 }

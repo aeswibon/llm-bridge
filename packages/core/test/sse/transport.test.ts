@@ -24,10 +24,13 @@ describe('SSETransport', () => {
       },
     });
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      body: mockStream,
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: mockStream,
+      }),
+    );
 
     const transport = createTransport({ url: 'http://test/api' });
     const events: string[] = [];
@@ -36,17 +39,23 @@ describe('SSETransport', () => {
     }
 
     expect(events).toEqual(['hello', 'world']);
-    expect(fetch).toHaveBeenCalledWith('http://test/api', expect.objectContaining({
-      method: 'POST',
-    }));
+    expect(fetch).toHaveBeenCalledWith(
+      'http://test/api',
+      expect.objectContaining({
+        method: 'POST',
+      }),
+    );
   });
 
   it('does not retry on 4xx errors', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 401,
-      text: () => Promise.resolve('Unauthorized'),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: () => Promise.resolve('Unauthorized'),
+      }),
+    );
 
     const transport = createTransport({ url: 'http://test/api', maxRetries: 3 });
     const events: string[] = [];
@@ -59,18 +68,21 @@ describe('SSETransport', () => {
   });
 
   it('retries on 5xx errors', async () => {
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValueOnce({ ok: false, status: 500 })
-      .mockResolvedValueOnce({
-        ok: true,
-        body: new ReadableStream({
-          start(controller) {
-            controller.enqueue(new TextEncoder().encode('data: ok\n\n'));
-            controller.close();
-          },
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: false, status: 500 })
+        .mockResolvedValueOnce({ ok: false, status: 500 })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('data: ok\n\n'));
+              controller.close();
+            },
+          }),
         }),
-      })
     );
 
     const transport = createTransport({ url: 'http://test/api', maxRetries: 3, retryDelay: 100 });
@@ -94,15 +106,18 @@ describe('SSETransport', () => {
   });
 
   it('aborts cleanly', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockImplementation((url, opts) => {
-      return new Promise((resolve, reject) => {
-        if (opts?.signal) {
-          opts.signal.addEventListener('abort', () => {
-            reject(new DOMException('The operation was aborted.', 'AbortError'));
-          });
-        }
-      });
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url, opts) => {
+        return new Promise((resolve, reject) => {
+          if (opts?.signal) {
+            opts.signal.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+          }
+        });
+      }),
+    );
 
     const transport = createTransport({ url: 'http://test/api', timeout: 100 });
 
@@ -119,22 +134,31 @@ describe('SSETransport', () => {
   });
 
   it('passes custom headers', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      body: new ReadableStream({
-        start(controller) { controller.close(); },
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: new ReadableStream({
+          start(controller) {
+            controller.close();
+          },
+        }),
       }),
-    }));
+    );
 
     const transport = createTransport({
       url: 'http://test/api',
       headers: { Authorization: 'Bearer test123' },
     });
 
-    for await (const _ of transport.stream()) {}
+    for await (const _ of transport.stream()) {
+    }
 
-    expect(fetch).toHaveBeenCalledWith('http://test/api', expect.objectContaining({
-      headers: expect.objectContaining({ Authorization: 'Bearer test123' }),
-    }));
+    expect(fetch).toHaveBeenCalledWith(
+      'http://test/api',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer test123' }),
+      }),
+    );
   });
 });

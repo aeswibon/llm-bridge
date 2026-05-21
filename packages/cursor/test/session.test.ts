@@ -14,7 +14,8 @@ describe('CursorBridgeSession', () => {
   });
 
   it('yields text chunks from SSE stream', async () => {
-    const sseText = 'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\ndata: {"choices":[{"finish_reason":"stop"}]}\n\n';
+    const sseText =
+      'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\ndata: {"choices":[{"finish_reason":"stop"}]}\n\n';
     const mockStream = new ReadableStream({
       start(controller) {
         controller.enqueue(new TextEncoder().encode(sseText));

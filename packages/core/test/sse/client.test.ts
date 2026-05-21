@@ -22,10 +22,13 @@ describe('StreamingClient', () => {
       },
     });
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      body: mockStream,
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: mockStream,
+      }),
+    );
 
     const parseEvent = (event: SSEEvent): StreamChunk | null => {
       try {
@@ -57,13 +60,17 @@ describe('StreamingClient', () => {
       },
     });
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      body: mockStream,
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        body: mockStream,
+      }),
+    );
 
     const parseEvent = (event: SSEEvent): StreamChunk | null => {
-      if (event.event === 'error') return { type: 'error', content: event.data, finishReason: 'error' };
+      if (event.event === 'error')
+        return { type: 'error', content: event.data, finishReason: 'error' };
       return null;
     };
 
@@ -81,13 +88,16 @@ describe('StreamingClient', () => {
     const controller = new AbortController();
     const parseEvent = (): StreamChunk | null => null;
 
-    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
-      return new Promise((_, reject) => {
-        controller.signal.addEventListener('abort', () => {
-          reject(new DOMException('The operation was aborted.', 'AbortError'));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => {
+        return new Promise((_, reject) => {
+          controller.signal.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+          });
         });
-      });
-    }));
+      }),
+    );
 
     setTimeout(() => controller.abort(), 10);
 
@@ -104,14 +114,18 @@ describe('StreamingClient', () => {
   });
 
   it('handles HTTP 4xx without retry', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 400,
-      text: () => Promise.resolve('Bad request'),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        text: () => Promise.resolve('Bad request'),
+      }),
+    );
 
     const parseEvent = (event: SSEEvent): StreamChunk | null => {
-      if (event.event === 'error') return { type: 'error', content: event.data, finishReason: 'error' };
+      if (event.event === 'error')
+        return { type: 'error', content: event.data, finishReason: 'error' };
       return null;
     };
 
