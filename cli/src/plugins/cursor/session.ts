@@ -68,7 +68,12 @@ export class CursorBridgeSession implements BridgeSession {
   private buildPrompt(messages: Message[]): string {
     const blocks: string[] = [];
     for (const m of messages) {
-      const text = typeof m.content === 'string' ? m.content : '';
+      const text =
+        typeof m.content === 'string'
+          ? m.content
+          : m.content != null
+            ? JSON.stringify(m.content)
+            : '';
       if (!text) continue;
       const label = m.role === 'tool' ? `tool (${m.tool_call_id ?? m.name ?? 'result'})` : m.role;
       blocks.push(`[${label}]\n${text}`);

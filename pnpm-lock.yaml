@@ -20,6 +20,9 @@ importers:
 
   cli:
     dependencies:
+      '@ai-ide-bridge/oauth':
+        specifier: workspace:*
+        version: link:../packages/oauth
       '@cursor/sdk':
         specifier: ^1.0.13
         version: 1.0.13
@@ -52,6 +55,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@ai-ide-bridge/oauth':
+        specifier: workspace:*
+        version: link:../oauth
       zod:
         specifier: ^3.25.76
         version: 3.25.76

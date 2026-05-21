@@ -7,3 +7,19 @@ export { PluginRegistry } from './registry.js';
 export { loadConfig, saveConfig, configPath } from './config.js';
 export { createDaemonManager, type DaemonManager } from './daemon.js';
 export { DaemonBridgeSession } from './daemon-session.js';
+
+export {
+  OAuthFlow,
+  DeviceFlow,
+  TokenLifecycle,
+  createTokenStore,
+  providers,
+  RefreshQueue,
+} from '@ai-ide-bridge/oauth';
+export type {
+  OAuthProvider,
+  TokenStore,
+  StoredToken,
+  OAuthConfig,
+  TokenLifecycleOptions,
+} from '@ai-ide-bridge/oauth';

@@ -21,12 +21,8 @@ export async function installDaemonCommand(): Promise<void> {
 
 async function installMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-  const wrapperPath = path.join(
-    path.dirname(process.execPath),
-    '..',
-    'scripts',
-    'llm-bridge-daemon.sh',
-  );
+  const binaryPath = process.execPath;
+  const uid = os.userInfo().uid;
 
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -36,7 +32,8 @@ async function installMacOSDaemon(): Promise<void> {
   <string>${LABEL}</string>
   <key>ProgramArguments</key>
   <array>
-    <string>${wrapperPath}</string>
+    <string>${binaryPath}</string>
+    <string>start</string>
   </array>
   <key>RunAtLoad</key>
   <true/>
@@ -60,7 +57,7 @@ async function installMacOSDaemon(): Promise<void> {
   }
 
   try {
-    execSync(`launchctl bootstrap "gui/$(id -u)" "${plistPath}"`, { stdio: 'inherit' });
+    execSync(`launchctl bootstrap gui/${uid} "${plistPath}"`, { stdio: 'inherit' });
     console.log(`Installed LaunchAgent: ${plistPath}`);
     console.log(`Logs: ~/Library/Logs/llm-bridge.{log,err.log}`);
   } catch (e) {
@@ -122,9 +119,10 @@ export async function uninstallDaemonCommand(): Promise<void> {
 
 async function uninstallMacOSDaemon(): Promise<void> {
   const plistPath = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
+  const uid = os.userInfo().uid;
 
   try {
-    execSync(`launchctl bootout "gui/$(id -u)" "${plistPath}" 2>/dev/null || true`, {
+    execSync(`launchctl bootout gui/${uid} "${plistPath}" 2>/dev/null || true`, {
       stdio: 'inherit',
     });
   } catch {
