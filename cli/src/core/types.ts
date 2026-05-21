@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const MessageSchema = z.object({
   role: z.enum(['system', 'user', 'assistant', 'tool', 'function']),
-  content: z.string().nullable().optional(),
+  content: z.unknown().nullable().optional(),
   name: z.string().optional(),
   tool_call_id: z.string().optional(),
   tool_calls: z
@@ -63,6 +63,7 @@ export interface StreamChunk {
 export interface BridgePlugin {
   name: string;
   version: string;
+  oauthProvider?: import('@ai-ide-bridge/oauth').OAuthProvider;
   authenticate(config: Record<string, string>): Promise<boolean>;
   listModels(config: Record<string, string>): Promise<ModelInfo[]>;
   createSession(config: Record<string, string>, model: string): Promise<BridgeSession>;

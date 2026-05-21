@@ -17,7 +17,7 @@ export class CopilotBridgeSession implements BridgeSession {
       model: this.modelId,
       messages: messages.map((m) => ({
         role: m.role,
-        content: m.content ?? '',
+        content: m.content,
         ...(m.tool_calls && { tool_calls: m.tool_calls }),
         ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
       })),
