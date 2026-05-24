@@ -52,7 +52,7 @@ async function authenticateWithOAuth(provider: Provider): Promise<boolean> {
 }
 
 async function askHidden(prompt: string): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string>((resolve) => {
     const stdin = processStdin;
     const stdout = processStdout;
 
@@ -92,9 +92,16 @@ async function askHidden(prompt: string): Promise<string> {
   });
 }
 
-export async function initCommand(): Promise<void> {
+function createAsk() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q: string) => new Promise<string>((resolve) => rl.question(q, resolve));
+  return {
+    ask: (q: string) => new Promise<string>((resolve) => rl.question(q, resolve)),
+    close: () => rl.close(),
+  };
+}
+
+export async function initCommand(): Promise<void> {
+  let { ask, close } = createAsk();
 
   console.log('llm-bridge setup wizard\n');
 
@@ -137,7 +144,13 @@ export async function initCommand(): Promise<void> {
     }
 
     const envVar = getEnvVar(provider);
+
+    close();
     const credential = await askHidden(getCredentialPrompt(provider));
+    const { ask: newAsk, close: newClose } = createAsk();
+    ask = newAsk;
+    close = newClose;
+
     if (!credential) {
       console.error('Credential is required.');
       continue;
@@ -169,5 +182,5 @@ export async function initCommand(): Promise<void> {
   }
 
   console.log(`\nConfig saved. Run 'llm-bridge start' to launch.`);
-  rl.close();
+  close();
 }

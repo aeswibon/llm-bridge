@@ -34,11 +34,27 @@ export function formatStreamChunk(chunk: StreamChunk, model: string, completionI
   return `data: ${JSON.stringify(payload)}\n\n`;
 }
 
+interface ToolCallResult {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
 export function formatCompletion(
   content: string,
   model: string,
   completionId: string,
+  toolCalls?: ToolCallResult[],
+  finishReason?: string,
 ): Record<string, unknown> {
+  const message: Record<string, unknown> = { role: 'assistant', content };
+  if (toolCalls && toolCalls.length > 0) {
+    message.tool_calls = toolCalls.map((tc) => ({
+      id: tc.id,
+      type: 'function',
+      function: { name: tc.name, arguments: tc.arguments },
+    }));
+  }
   return {
     id: completionId,
     object: 'chat.completion',
@@ -47,8 +63,8 @@ export function formatCompletion(
     choices: [
       {
         index: 0,
-        message: { role: 'assistant', content },
-        finish_reason: 'stop',
+        message,
+        finish_reason: finishReason || 'stop',
       },
     ],
     usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },

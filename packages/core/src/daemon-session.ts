@@ -57,12 +57,23 @@ export class DaemonBridgeSession implements BridgeSession {
       },
     };
 
-    this.proc.stdin!.write(JSON.stringify(request) + '\n');
+    let finished = false;
+    let capturedError: Error | null = null;
+
+    const writeResult = this.proc.stdin!.write(JSON.stringify(request) + '\n');
+    if (!writeResult) {
+      finished = true;
+      yield {
+        type: 'error',
+        content: 'Failed to write request to daemon process',
+        finishReason: 'error',
+      };
+      this.busy = false;
+      return;
+    }
 
     let buffer = '';
     let stderrBuffer = '';
-    let finished = false;
-    let capturedError: Error | null = null;
     let onDataResolve: (() => void) | null = null;
 
     const onStderr = (data: Buffer) => {
@@ -182,6 +193,10 @@ export class DaemonBridgeSession implements BridgeSession {
         }
       }
     } finally {
+      if (capturedError || !finished) {
+        this.proc?.kill();
+        this.proc = null;
+      }
       this.proc?.stdout?.removeListener('data', onData);
       this.proc?.removeListener('error', onError);
       this.proc?.removeListener('exit', onExit);

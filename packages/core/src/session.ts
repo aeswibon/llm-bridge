@@ -8,9 +8,25 @@ interface SessionEntry {
 export class SessionStore {
   private sessions: Map<string, SessionEntry> = new Map();
   private ttlMs: number;
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(ttlSeconds: number = 1800) {
     this.ttlMs = ttlSeconds * 1000;
+  }
+
+  startCleanup(intervalMs: number = 60000): void {
+    if (this.cleanupInterval) return;
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, intervalMs);
+    this.cleanupInterval.unref();
+  }
+
+  stopCleanup(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
   }
 
   set(id: string, session: BridgeSession): void {

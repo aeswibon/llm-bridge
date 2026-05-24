@@ -7,7 +7,7 @@ export async function doctorCommand(): Promise<void> {
   const config = readConfig();
   console.log('llm-bridge diagnostics\n');
   console.log(`Config: ${configPath()}`);
-  console.log(`Active plugin: ${config.activePlugin ?? config.defaultPlugin}`);
+  console.log(`Default plugin: ${config.defaultPlugin}`);
   console.log(`Port: ${config.port}`);
   console.log(`Host: ${config.host}`);
   console.log(`Tool mode: ${config.toolMode}`);
@@ -18,12 +18,11 @@ export async function doctorCommand(): Promise<void> {
     console.log('✗ Config file not found (using defaults)');
   }
 
-  const activePlugin = config.activePlugin ?? config.defaultPlugin;
-  const pluginConfig = config.plugins[activePlugin];
+  const pluginConfig = config.plugins[config.defaultPlugin];
   if (pluginConfig && Object.keys(pluginConfig).length > 0) {
-    console.log(`✓ Plugin "${activePlugin}" has configuration`);
+    console.log(`✓ Plugin "${config.defaultPlugin}" has configuration`);
   } else {
-    console.log(`✗ Plugin "${activePlugin}" has no configuration`);
+    console.log(`✗ Plugin "${config.defaultPlugin}" has no configuration`);
   }
 
   try {

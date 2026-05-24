@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { homedir, hostname } from 'node:os';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { StoredToken, TokenStore } from './types.js';
 
@@ -9,7 +9,7 @@ const KEY_LENGTH = 32;
 const IV_LENGTH = 16;
 
 function getEncryptionKey(): Buffer {
-  const machineId = [process.platform, hostname(), homedir()].join(':');
+  const machineId = [process.platform, homedir()].join(':');
   return scryptSync(machineId, 'llm-bridge-oauth', KEY_LENGTH);
 }
 
@@ -55,7 +55,8 @@ export function createFileStore(): TokenStore {
           decrypt(readFileSync(file, 'utf8')),
         );
         return existing[provider] ?? null;
-      } catch {
+      } catch (err) {
+        console.error(`File store decrypt failed for ${provider}:`, err);
         return null;
       }
     },
@@ -69,8 +70,8 @@ export function createFileStore(): TokenStore {
         );
         delete existing[provider];
         writeFileSync(file, encrypt(JSON.stringify(existing)));
-      } catch {
-        // Ignore errors on delete
+      } catch (err) {
+        console.error(`File store delete failed for ${provider}:`, err);
       }
     },
   };

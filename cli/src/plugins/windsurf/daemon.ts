@@ -17,7 +17,7 @@ export function createWindsurfDaemon(options: WindsurfDaemonOptions = {}): Daemo
   return createDaemonManager({
     binaryName: 'language_server',
     downloadUrl: `https://server.codeium.com/language_server/latest/{platform}/{arch}`,
-    checksum: 'PLACEHOLDER_SHA256',
+    checksum: '',
     knownPaths,
     envVar: 'WINDSURF_LANGUAGE_SERVER_PATH',
   });

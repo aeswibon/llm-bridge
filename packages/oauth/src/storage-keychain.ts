@@ -70,9 +70,13 @@ export function createKeychainStore(): TokenStore | null {
           },
         );
       } else if (os === 'win32') {
-        execSync(`powershell -Command "cmdkey /generic:${account} /user:token /pass:'${secret}'"`, {
-          stdio: 'ignore',
-        });
+        execSync(
+          `powershell -Command "$s=Get-Content -Raw; cmdkey /generic:${account} /user:token /pass:$s"`,
+          {
+            input: secret,
+            stdio: ['pipe', 'ignore', 'ignore'],
+          },
+        );
       }
     },
 
@@ -104,7 +108,8 @@ export function createKeychainStore(): TokenStore | null {
           // different semantics. Fall back to encrypted file store.
           return null;
         }
-      } catch {
+      } catch (err) {
+        console.error(`Keychain get failed for ${provider}:`, err);
         return null;
       }
       return null;
@@ -127,8 +132,8 @@ export function createKeychainStore(): TokenStore | null {
             stdio: 'ignore',
           });
         }
-      } catch {
-        // Ignore errors if credential doesn't exist
+      } catch (err) {
+        console.error(`Keychain delete failed for ${provider}:`, err);
       }
     },
   };
