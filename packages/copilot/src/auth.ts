@@ -27,8 +27,8 @@ export async function getToken(config: CopilotConfig): Promise<string | null> {
     if (token && Date.now() < token.expiresAt) {
       return token.accessToken;
     }
-  } catch {
-    // OAuth package may not be available
+  } catch (err) {
+    console.warn('OAuth token store unavailable:', err);
   }
 
   return config.COPILOT_OAUTH_TOKEN ?? null;
@@ -37,7 +37,6 @@ export async function getToken(config: CopilotConfig): Promise<string | null> {
 export async function refreshOAuthToken(
   refreshToken: string,
   clientId: string,
-  _clientSecret: string,
 ): Promise<{ accessToken: string; refreshToken: string } | null> {
   try {
     const params = new URLSearchParams({

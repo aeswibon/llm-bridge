@@ -26,7 +26,7 @@ export interface DaemonManager {
 export function createDaemonManager(config: {
   binaryName: string;
   downloadUrl: string;
-  checksum: string;
+  checksum?: string;
   knownPaths: string[];
   envVar?: string;
   daemonsDir?: string;
@@ -160,16 +160,20 @@ export function createDaemonManager(config: {
       return Promise.race([downloadPromise, timeoutPromise]).then((data) => {
         try {
           writeFileSync(destPath, data);
-          const hash = createHash('sha256').update(data).digest('hex');
-          if (hash !== config.checksum) {
-            throw new Error(`Checksum mismatch: expected ${config.checksum}, got ${hash}`);
+          if (config.checksum) {
+            const hash = createHash('sha256').update(data).digest('hex');
+            if (hash !== config.checksum) {
+              throw new Error(`Checksum mismatch: expected ${config.checksum}, got ${hash}`);
+            }
           }
           chmodSync(destPath, 0o755);
           return destPath;
         } catch (err) {
           try {
             unlinkSync(destPath);
-          } catch {}
+          } catch (cleanupErr) {
+            console.error('Failed to clean up binary after checksum mismatch:', cleanupErr);
+          }
           throw err;
         }
       });

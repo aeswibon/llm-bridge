@@ -1,6 +1,6 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http';
 import crypto from 'node:crypto';
-import { BridgeConfig, DefaultConfig, BridgePlugin } from './types.js';
+import { BridgeConfig, DefaultConfig, BridgePlugin, StreamChunk } from './types.js';
 import { parseChatRequest } from './parser.js';
 import { PluginRegistry } from './registry.js';
 import { SessionStore } from './session.js';
@@ -28,6 +28,8 @@ export class BridgeServer {
       });
     });
 
+    this.sessions.startCleanup();
+
     return new Promise((resolve) => {
       this.server!.listen(this.config.port, this.config.host, () => {
         const address = this.server!.address();
@@ -39,6 +41,7 @@ export class BridgeServer {
   }
 
   async stop(): Promise<void> {
+    this.sessions.stopCleanup();
     await this.sessions.disposeAll();
     return new Promise((resolve) => {
       this.server?.close(() => resolve());
@@ -158,20 +161,44 @@ export class BridgeServer {
         Connection: 'keep-alive',
       });
 
+      const completionId = `chatcmpl-${crypto.randomUUID()}`;
       const chunks: string[] = [];
+      const toolCalls: { id: string; name: string; arguments: string }[] = [];
+      let finishReason: string | undefined;
+
+      if (stream) {
+        const rolePayload = {
+          id: completionId,
+          object: 'chat.completion.chunk',
+          created: Math.floor(Date.now() / 1000),
+          model,
+          choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }],
+        };
+        res.write(`data: ${JSON.stringify(rolePayload)}\n\n`);
+      }
+
       for await (const chunk of session.send(messages, tools)) {
         if (stream) {
-          res.write(formatStreamChunk(chunk, model, `chatcmpl-${crypto.randomUUID()}`));
+          res.write(formatStreamChunk(chunk, model, completionId));
         } else {
           if (chunk.type === 'text' && chunk.content) {
             chunks.push(chunk.content);
+          } else if (chunk.type === 'tool_call' && chunk.toolCall) {
+            toolCalls.push(chunk.toolCall);
+          } else if (chunk.type === 'done' && chunk.finishReason) {
+            finishReason = chunk.finishReason;
           }
         }
       }
 
       if (!stream) {
-        const completionId = `chatcmpl-${crypto.randomUUID()}`;
-        const completion = formatCompletion(chunks.join(''), model, completionId);
+        const completion = formatCompletion(
+          chunks.join(''),
+          model,
+          completionId,
+          toolCalls.length > 0 ? toolCalls : undefined,
+          finishReason,
+        );
         res.end(JSON.stringify(completion));
       } else {
         res.write(`data: [DONE]\n\n`);
